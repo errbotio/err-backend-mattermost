@@ -39,7 +39,7 @@ BOT_IDENTITY = {
 }
 ```
 
-- If the bot has problems doing some actions, you make it system admin.
+- If the bot has problems doing some actions, you should make it system admin, some actions won't work otherwise.
 
 ### INFO
 
