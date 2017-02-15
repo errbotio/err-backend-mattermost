@@ -343,7 +343,7 @@ class MattermostBackend(ErrBot):
 		self.connect_callback()
 		self.callback_presence(Presence(identifier=self.bot_identifier, status=ONLINE))
 
-	@lru_cache(50)
+	@lru_cache(64)
 	def get_direct_channel(self, userid, otherUserid):
 		"""
 		Get the direct channel to another user.
