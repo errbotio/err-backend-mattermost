@@ -19,7 +19,8 @@ It probably has quite a few bugs as it is.
 ### INSTALLATION
 
 Download this backend.
-Install the backends requirements. 
+Create an account for the bot on the server.
+Install the backends requirements.
 Open errbot's config.py:
 
 ```
@@ -27,7 +28,18 @@ BACKEND = 'mattermost'
 BOT_EXTRA_BACKEND_DIR = '/path/to/backends'
 
 BOT_ADMINS = ('@yourname') # Names need the @ in front!
+
+BOT_IDENTITY = {
+        'email': 'bot@email.de',
+        'password': 'botpassword',
+        'insecure': False, # Optional, default value is False. Set to true for self signed certificates
+        'server': 'https://mattermost.kapsi.me',
+        'team': 'nameoftheteam',
+        'timeout': 30 # Optional, default value is 30. If the webserver
+}
 ```
+
+If the bot has problems doing some actions, you make it system admin.
 
 ### INFO
 
