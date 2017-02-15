@@ -35,7 +35,7 @@ BOT_IDENTITY = {
         'insecure': False, # Optional, default value is False. Set to true for self signed certificates
         'server': 'https://mattermost.kapsi.me',
         'team': 'nameoftheteam',
-        'timeout': 30 # Optional, default value is 30. If the webserver
+        'timeout': 30 # Optional, default value is 30. If the webserver disconnects idle connections later/earlier change this value
 }
 ```
 
