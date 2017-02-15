@@ -1,0 +1,2 @@
+errbot==4.3.7
+websockets==3.2

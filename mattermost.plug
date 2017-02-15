@@ -1,0 +1,6 @@
+[Core]
+Name = Mattermost
+Module = mattermost
+
+[Documentation]
+Description = A Mattermost backend for errbot.
