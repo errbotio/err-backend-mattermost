@@ -1,6 +1,6 @@
 # Errbot Backend for Mattermost
 
-**Thanks** to http://errbot.io and for the bot.
+**Thanks** to http://errbot.io for the bot.
 Most of this code was build with help from the already existing backends,
 especially:
 https://github.com/errbotio/errbot/blob/master/errbot/backends/slack.py
