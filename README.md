@@ -4,6 +4,7 @@
 Most of this code was build with help from the already existing backends,
 especially:
 https://github.com/errbotio/errbot/blob/master/errbot/backends/slack.py
+(If there is an Issue with any code I reused, please give me message!)
 
 I can not guarantee that this is currently working 100%.
 It probably has quite a few bugs as it is.
