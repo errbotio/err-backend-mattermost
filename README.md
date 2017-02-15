@@ -18,10 +18,10 @@ It probably has quite a few bugs as it is.
 
 ### INSTALLATION
 
-Download this backend.
-Create an account for the bot on the server.
-Install the backends requirements.
-Open errbot's config.py:
+- Download this backend.
+- Create an account for the bot on the server.
+- Install the backends requirements.
+- Open errbot's config.py:
 
 ```
 BACKEND = 'mattermost'
@@ -39,7 +39,7 @@ BOT_IDENTITY = {
 }
 ```
 
-If the bot has problems doing some actions, you make it system admin.
+- If the bot has problems doing some actions, you make it system admin.
 
 ### INFO
 
