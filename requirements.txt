@@ -1,2 +1,1 @@
-errbot<=4.3
 websockets==3.2
