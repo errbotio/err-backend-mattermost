@@ -1,5 +1,6 @@
 import logging
 import json
+import asyncio
 from functools import lru_cache
 
 from errbot.backends.base import Message, ONLINE, Room, RoomError, \
@@ -202,7 +203,8 @@ class MattermostBackend(ErrBot):
 			raise UserDoesNotExistError("Cannot find user {}".format(name))
 		return user['id']
 
-	async def mattermost_event_handler(self, payload):
+	@asyncio.coroutine
+	def mattermost_event_handler(self, payload):
 		if not payload:
 			return
 

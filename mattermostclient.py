@@ -78,7 +78,8 @@ class MattermostClient:
 		self._loop.run_until_complete(self.createConnection(eventHandler))
 		self._loop.run_forever()
 
-	async def createConnection(self, eventHandler):
+	@asyncio.coroutine
+	def createConnection(self, eventHandler):
 		context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 		if not self._verify:
 			context.verify_mode = ssl.CERT_NONE
@@ -90,19 +91,20 @@ class MattermostClient:
 
 		url = scheme + self.urlparts.hostname + self.apiUrl + '/users/websocket'
 
-		async with websockets.connect(
+		websocket = yield from websockets.connect(
 				url,
 				ssl=context,
 				extra_headers={'Cookie': 'MMAUTHTOKEN={}'.format(self._cookie)}
-		) as websocket:
-			self._websocket = websocket
-			# TODO: Use a cookie in websocket connection, because of a bug in mattermost
-			# https://github.com/mattermost/platform/pull/5406
-			# if not await self._authenticateWebsocket(websocket):
-			#	raise MattermostClientError('Could not authenticate Websocket connection.')
-			await self._startLoop(websocket, eventHandler)
+		)
+		self._websocket = websocket
+		# TODO: Use a cookie in websocket connection, because of a bug in mattermost
+		# https://github.com/mattermost/platform/pull/5406
+		# if not yield from self._authenticateWebsocket(websocket):
+		#	raise MattermostClientError('Could not authenticate Websocket connection.')
+		yield from self._startLoop(websocket, eventHandler)
 
-	async def _startLoop(self, websocket, eventHandler):
+	@asyncio.coroutine
+	def _startLoop(self, websocket, eventHandler):
 		"""
 		We will listen for websockets events, sending a heartbeat/pong everytime
 		we react a TimeoutError. If we don't the webserver would close the idle connection,
@@ -111,16 +113,17 @@ class MattermostClient:
 		log.debug('Starting websocket loop')
 		while True:
 			try:
-				await asyncio.wait_for(
+				yield from asyncio.wait_for(
 					self.waitForMessage(websocket, eventHandler),
 					timeout=self._timeout
 				)
 			except asyncio.TimeoutError:
-				await websocket.pong()
+				yield from websocket.pong()
 				log.debug("Sending heartbeat...")
 				continue
 
-	async def _authenticateWebsocket(self, websocket):
+	@asyncio.coroutine
+	def _authenticateWebsocket(self, websocket):
 		"""
 		Sends a authentication challenge over a websocket.
 		This is not needed when we just send the cookie we got on login
@@ -134,8 +137,8 @@ class MattermostClient:
 				"token": self.token
 			}
 		}).encode('utf8')
-		await websocket.send(jsonData)
-		response = await websocket.recv()
+		yield from websocket.send(jsonData)
+		response = yield from websocket.recv()
 		status = json.loads(response)
 		if ('status' in status and status['status'] == 'OK') and \
 				('seq_reply' in status and status['seq_reply'] == 1):
@@ -145,7 +148,8 @@ class MattermostClient:
 			log.error(status)
 			return False
 
-	async def waitForMessage(self, websocket, eventHandler):
+	@asyncio.coroutine
+	def waitForMessage(self, websocket, eventHandler):
 		while True:
-			message = await websocket.recv()
-			await eventHandler(message)
+			message = yield from websocket.recv()
+			yield from eventHandler(message)
