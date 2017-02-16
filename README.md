@@ -24,7 +24,7 @@ It probably has quite a few bugs as it is.
 - Open errbot's config.py:
 
 ```
-BACKEND = 'mattermost'
+BACKEND = 'Mattermost'
 BOT_EXTRA_BACKEND_DIR = '/path/to/backends'
 
 BOT_ADMINS = ('@yourname') # Names need the @ in front!
