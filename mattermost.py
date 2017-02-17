@@ -178,7 +178,7 @@ class MattermostBackend(ErrBot):
 		identity = config.BOT_IDENTITY
 		self._email = identity.get('email')
 		self._password = identity.get('password')
-		self.url = identity.get('server')
+		self.url = identity.get('server').rstrip('/')
 		self.insecure = identity.get('insecure', False)
 		self.timeout = identity.get('timeout', DEFAULT_TIMEOUT)
 		self.team = identity.get('team')
