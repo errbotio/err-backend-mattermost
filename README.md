@@ -4,7 +4,7 @@
 Most of this code was build with help from the already existing backends,
 especially:
 https://github.com/errbotio/errbot/blob/master/errbot/backends/slack.py
-(If there is an Issue with any code I reused, please give me message!)
+(If there is an Issue with any code I reused, please give me a message!)
 
 I can not guarantee that this is currently working 100%.
 It probably has quite a few bugs as it is.
@@ -13,14 +13,17 @@ It probably has quite a few bugs as it is.
 
 - Channelmentions in messages aren't accounted for
 - Nothing regarding files works
-- Colors  in messages aren't working, mattermost does not have this afaik
 - Probably a lot more
+
+### REQUIREMENTS
+- Python >= 3.4
+- websockets 3.2
 
 ### INSTALLATION
 
-- Download this backend.
+- `git clone https://github.com/Vaelor/errbot-mattermost-backend.git`
 - Create an account for the bot on the server.
-- Install the backends requirements.
+- Install the requirements.
 - Open errbot's config.py:
 
 ```
@@ -43,6 +46,6 @@ BOT_IDENTITY = {
 
 ### INFO
 
-This bot brings its own api and mattermost client implemantation,
-since there wasn't anything complete enough/no python client at all.
-This is probably going to change.
+This bot brings its own api and mattermost client implementation
+since there wasn't anything complete enough/no python client for mattermost at all - none that I found at least.
+I will probably do some changes there, maybe move the client into it's own repository.
