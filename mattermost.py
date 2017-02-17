@@ -8,6 +8,7 @@ from errbot.backends.base import (
     Room, RoomError, RoomDoesNotExistError, RoomOccupant,
 )
 from errbot.core import ErrBot
+from errbot.rendering import md
 from errbot.utils import split_string_after
 
 from mattermostclient import MattermostApiResponseError, MattermostClient
@@ -188,6 +189,7 @@ class MattermostBackend(ErrBot):
 		self.token = ''
 		self.bot_identifier = None
 		self.client = None
+		self.md = md()
 
 	@property
 	def userid(self):
@@ -425,7 +427,7 @@ class MattermostBackend(ErrBot):
 			message_type = "direct" if message.is_direct else "channel"
 			log.debug('Sending %s message to %s (%s)' % (message_type, to_name, to_channel_id))
 
-			body = message.body
+			body = self.md.convert(message.body)
 			log.debug('Message size: %d' % len(body))
 
 			limit = min(self.bot_config.MESSAGE_SIZE_LIMIT, MATTERMOST_MESSAGE_LIMIT)
