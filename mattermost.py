@@ -3,8 +3,10 @@ import json
 import asyncio
 from functools import lru_cache
 
-from errbot.backends.base import Message, ONLINE, Room, RoomError, \
-	RoomDoesNotExistError, UserDoesNotExistError, RoomOccupant, Person, Presence, AWAY
+from errbot.backends.base import (
+    Message, Presence, ONLINE, AWAY, Person, UserDoesNotExistError,
+    Room, RoomError, RoomDoesNotExistError, RoomOccupant,
+)
 from errbot.core import ErrBot
 from errbot.utils import split_string_after
 
