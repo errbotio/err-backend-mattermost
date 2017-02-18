@@ -394,7 +394,9 @@ class MattermostBackend(ErrBot):
 		self.bot_identifier = MattermostPerson(self.client, userid=self.client.userid, teamid=self.teamid)
 
 		try:
-			self.client.connect(self.mattermost_event_handler)
+			loop = self.client.connect(self.mattermost_event_handler)
+			self.reset_reconnection_count()
+			loop.run_forever()
 		except KeyboardInterrupt:
 			log.info("Interrupt received, shutting down..")
 			return True

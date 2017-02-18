@@ -76,7 +76,7 @@ class MattermostClient:
 	def connect(self, eventHandler):
 		self._loop = asyncio.get_event_loop()
 		self._loop.run_until_complete(self.createConnection(eventHandler))
-		self._loop.run_forever()
+		return self._loop
 
 	@asyncio.coroutine
 	def createConnection(self, eventHandler):
