@@ -381,7 +381,11 @@ class MattermostBackend(ErrBot):
 		return identifier
 
 	def serve_once(self):
-		self.client = MattermostClient(self.url, verify=not self.insecure)
+		self.client = MattermostClient(
+			self.url,
+			verify=not self.insecure,
+			timeout=self.timeout,
+		)
 		self.client.login(self._email, self._password)
 
 		try:
