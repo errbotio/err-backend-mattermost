@@ -6,14 +6,12 @@ especially:
 https://github.com/errbotio/errbot/blob/master/errbot/backends/slack.py
 (If there is an Issue with any code I reused, please give me a message!)
 
-I can not guarantee that this is currently working 100%.
 It probably has quite a few bugs as it is.
 
 ### KNOWN (POSSIBLE) ISSUES
 
-- Channelmentions in messages aren't accounted for
+- Channelmentions in messages aren't accounted for (Unsure if they need to be)
 - Nothing regarding files works
-- Probably a lot more
 
 ### REQUIREMENTS
 - Python >= 3.4
