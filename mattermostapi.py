@@ -380,6 +380,9 @@ class MattermostApi:
 	def getChannelByName(self, team_id, channel_name):
 		return self.get('/teams/{}/channels/name/{}'.format(team_id, channel_name))
 
+	def getChannelsUserHasNotJoined(self, team_id):
+		return self.get('/teams/{}/channels/more'.format(team_id))
+
 	def getChannelsPageUserHasNotJoined(self, team_id, offset=0, limit=50):
 		return self.get('/teams/{}/channels/more/{}/{}'.format(
 			team_id,
@@ -392,9 +395,6 @@ class MattermostApi:
 
 	def getChannel(self, team_id, channel_id):
 		return self.get('/teams/{}/channels/{}/'.format(team_id, channel_id))
-
-	def getChannelCounts(self, team_id):
-		return self.get('/teams/{}/channels/counts'.format(team_id))
 
 	def getChannelStats(self, team_id, channel_id):
 		return self.get('/teams/{}/channels/{}/stats'.format(team_id, channel_id))
