@@ -658,7 +658,7 @@ class MattermostRoom(Room):
 	def join(self, username: str=None, password: str=None):
 		if not self.exists:
 			log.info("Channel {} doesn't seem exist, trying to create it.".format(str(self)))
-			self.create() # Todo: this would always create a public room - is that wanted?
+			self.create() # This always creates a public room!
 		log.info("Joining channel {}".format(str(self)))
 		try:
 			self.client.api.joinChannelByName(self.teamid, self.name)

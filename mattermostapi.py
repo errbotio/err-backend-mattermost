@@ -10,8 +10,6 @@ logging.basicConfig(level=logging.INFO)
 
 log = logging.getLogger('mattermost.api')
 
-# TODO: Probably should replace that with the official swagger api, but it doesn't seem complete
-
 class MattermostApiResponseError(Exception):
 	"""Raise when the api does return a statuscode other then 200"""
 
