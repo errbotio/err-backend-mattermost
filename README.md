@@ -47,3 +47,9 @@ BOT_IDENTITY = {
 This bot brings its own api and mattermost client implementation
 since there wasn't anything complete enough/no python client for mattermost at all - none that I found at least.
 I will probably do some changes there, maybe move the client into it's own repository.
+
+### FAQ
+
+## The Bot does not answer my direct messages
+If you have multiple teams, check that you are both members of the same team!
+
