@@ -13,6 +13,7 @@ from errbot.utils import split_string_after
 
 from mattermostclient import MattermostApiResponseError, MattermostClient
 
+PAGELIMIT = 200
 
 log = logging.getLogger('errbot.backends.mattermost')
 
@@ -509,7 +510,9 @@ class MattermostBackend(ErrBot):
 		channels = []
 		response = self.client.api.getChannelsForUserInTeam(self.teamid)
 		if not joinedOnly:
-			response += self.client.api.getChannelsUserHasNotJoined(self.teamid)
+			channel_count = self.client.api.getChannelCounts(self.teamid)
+			for start in range(0, channel_count, PAGELIMIT):
+				response += self.client.api.getChannelsPageUserHasNotJoined(self.teamid, offset=start, limit=PAGELIMIT)
 		for channel in response:
 			if channel not in channels:
 				channels.append(channel)
@@ -594,7 +597,13 @@ class MattermostRoom(Room):
 	@property
 	def exists(self):
 		channels = self.client.api.getChannelsForUserInTeam(self.teamid)
-		channels += self.client.api.getChannelsUserHasNotJoined(self.teamid)
+		channel_count = self.client.api.getChannelCounts(self.teamid)
+		for start in range(0, channel_count, PAGELIMIT):
+			channels += self.client.api.getChannelsPageUserHasNotJoined(
+				self.teamid,
+				offset=start,
+				limit=PAGELIMIT
+			)
 		return len([c for c in channels if c['name'] == self.name]) > 0
 
 	@property
@@ -634,9 +643,8 @@ class MattermostRoom(Room):
 	def occupants(self):
 		member_count = self.client.api.getChannelStats(self.teamid, self.id)['member_count']
 		members = {}
-		userPageLimit = 200
-		for start in range(0, member_count, userPageLimit):
-			members.update(self.client.api.getUsersInChannel(self.teamid, self.id, offset=start, limit=userPageLimit))
+		for start in range(0, member_count, PAGELIMIT):
+			members.update(self.client.api.getUsersInChannel(self.teamid, self.id, offset=start, limit=PAGELIMIT))
 		return [MattermostRoomOccupant(self.client, userid=m, teamid=self.teamid, channelid=self.id, bot=self._bot) for m in members]
 
 	def create(self, private=False):
