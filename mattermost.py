@@ -264,7 +264,9 @@ class MattermostBackend(ErrBot):
 	def _message_event_handler(self, message):
 		log.debug(message)
 		data = message['data']
-		if self.teamid != data['team_id']:
+
+		# In some cases (direct messages) team_id is an empty string
+		if data['team_id'] != '' and self.teamid != data['team_id']:
 			log.info("Message came from another team ({}), ignoring...".format(data['team_id']))
 			return
 
