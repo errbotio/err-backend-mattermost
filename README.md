@@ -50,6 +50,6 @@ I will probably do some changes there, maybe move the client into it's own repos
 
 ### FAQ
 
-## The Bot does not answer my direct messages
+##### The Bot does not answer my direct messages
 If you have multiple teams, check that you are both members of the same team!
 
