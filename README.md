@@ -34,7 +34,7 @@ BOT_IDENTITY = {
         'email': 'bot@email.de',
         'password': 'botpassword',
         'insecure': False, # Optional, default value is False. Set to true for self signed certificates
-        'server': 'https://mattermost.kapsi.me',
+        'server': 'https://mattermost.server.com',
         'team': 'nameoftheteam',
         'timeout': 30 # Optional, default value is 30. If the webserver disconnects idle connections later/earlier change this value
 }
