@@ -307,7 +307,7 @@ class MattermostBackend(ErrBot):
 		mentions = []
 		if 'mentions' in data:
 			# TODO: Only user, not channel mentions are in here at the moment
-			mentions = self.build_identifier(json.loads(data['mentions']))
+			mentions = self.mentions_build_identifier(json.loads(data['mentions']))
 
 		message = Message(text)
 		# TODO: slack backend has attachments here, have to see how I need these here
@@ -370,16 +370,45 @@ class MattermostBackend(ErrBot):
 				userid, otherUserid
 			))
 
-	def build_identifier(self, mentions):
+	def build_identifier(self, txtrep):
+		"""
+		Convert a textual representation into a :class:`~MattermostPerson` or :class:`~MattermostRoom`
+
+		Supports strings with the following formats::
+
+			@username
+			#channelname
+			channelid
+		"""
+		txtrep = txtrep.strip()
+		if txtrep.startswith('#'):
+			# Channel
+			channelid = self.channelname_to_channelid(txtrep[1:])
+			if channelid is not None:
+				return MattermostRoom(channelid=channelid, teamid=self.teamid, bot=self)
+		else:
+			# Assuming either a channelid or a username
+			if txtrep.startswith('@'):
+				# username
+				userid = self.username_to_userid(txtrep[1:])
+			else:
+				# channelid
+				userid = txtrep
+
+			if userid is not None:
+				return MattermostPerson(self.client, userid=userid, channelid=self.get_direct_channel(self.userid, userid)['id'], teamid=self.teamid)
+
+		raise Exception(
+			'Invalid or unsupported Mattermost identifier: %s' % txtrep
+		)
+
+	def mentions_build_identifier(self, mentions):
 		identifier = []
 		for mention in mentions:
-			if mention == self.bot_identifier.userid:
-				continue
-			channel = self.get_direct_channel(self.userid, mention)
-			channelid = channel['id']
-			identifier.append(MattermostPerson(
-				self.client, userid=mention, channelid=channelid, teamid=self.teamid
-			))
+			if mention != self.bot_identifier.userid:
+				identifier.append(
+					self.build_identifier(mention)
+				)
 		return identifier
 
 	def serve_once(self):
