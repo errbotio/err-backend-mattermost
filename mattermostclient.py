@@ -29,8 +29,6 @@ class MattermostClient:
 		self._token = ''
 		self._verify = verify
 		self._timeout = timeout
-		self._loop = None
-		self._websocket = None
 		self._cookie = None
 		self.api = api(url, verify=verify)
 
@@ -74,9 +72,9 @@ class MattermostClient:
 		return self._cookie
 
 	def connect(self, eventHandler):
-		self._loop = asyncio.get_event_loop()
-		self._loop.run_until_complete(self.createConnection(eventHandler))
-		return self._loop
+		loop = asyncio.get_event_loop()
+		loop.run_until_complete(self.createConnection(eventHandler))
+		return loop
 
 	@asyncio.coroutine
 	def createConnection(self, eventHandler):
@@ -96,7 +94,6 @@ class MattermostClient:
 				ssl=context,
 				extra_headers={'Cookie': 'MMAUTHTOKEN={}'.format(self._cookie)}
 		)
-		self._websocket = websocket
 		# TODO: Use a cookie in websocket connection, because of a bug in mattermost
 		# https://github.com/mattermost/platform/pull/5406
 		# if not yield from self._authenticateWebsocket(websocket):
