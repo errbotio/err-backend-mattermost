@@ -87,7 +87,11 @@ class MattermostClient:
 		else:
 			scheme = 'ws://'
 
-		url = scheme + self.urlparts.hostname + self.apiUrl + '/users/websocket'
+		port = ''
+		if self.urlparts.port is not None:
+			port = ':' + str(self.urlparts.port)
+
+		url = scheme + self.urlparts.hostname + port + self.apiUrl + '/users/websocket'
 
 		websocket = yield from websockets.connect(
 				url,
