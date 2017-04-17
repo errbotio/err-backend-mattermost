@@ -607,6 +607,8 @@ class MattermostRoom(Room):
 			self._id = self._channel['id']
 		return self._id
 
+	channelid = id
+
 	@property
 	def _channel(self):
 		channel = self.client.api.getChannelByName(team_id=self.teamid, channel_name=self.name)
