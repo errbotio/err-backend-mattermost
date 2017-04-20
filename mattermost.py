@@ -125,56 +125,6 @@ class MattermostRoomOccupant(RoomOccupant, MattermostPerson):
 			return False
 		return other.room.id == self.room.id and other.userid == self.userid
 
-
-class MattermostBot(MattermostPerson):
-	"""
-	A bot on Mattermost
-	"""
-	def __init__(self, client, bot_id, bot_username):
-		self._bot_id = bot_id
-		self._bot_username = bot_username
-		super().__init__(client=client, userid=bot_id)
-
-	@property
-	def username(self):
-		return self._bot_username
-
-	nick = username
-
-	@property
-	def aclattr(self):
-		return "<{}>".format(self._bot_id)
-
-	@property
-	def fullname(self):
-		return None
-
-
-class MattermostRoomBot(RoomOccupant, MattermostBot):
-	"""
-	This class represents a bot inside a MUC.
-	"""
-	def __init__(self, client, bot_id, bot_username, channelid, teamid, bot):
-		super().__init__(client, bot_id, bot_username)
-		self._room = MattermostRoom(channelid=channelid, bot=bot, teamid=teamid)
-
-	@property
-	def room(self):
-		return self._room
-
-	def __unicode__(self):
-		return "~%s/%s" % (self._room.name, self.username)
-
-	def __str__(self):
-		return self.__unicode__()
-
-	def __eq__(self, other):
-		if not isinstance(other, RoomOccupant):
-			log.warning('Tried to compare a MattermostRoomBotOccupant with a MattermostPerson %s vs %s', self, other)
-			return False
-		return other.room.id == self.room.id and other.userid == self.userid
-
-
 class MattermostBackend(ErrBot):
 	def __init__(self, config):
 		super().__init__(config)
