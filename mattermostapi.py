@@ -379,7 +379,7 @@ class MattermostApi:
 		return self.get('/teams/{}/channels/name/{}'.format(team_id, channel_name))
 
 	def getChannelsUserHasNotJoined(self, team_id):
-		return self.get('/teams/{}/channels/more'.format(team_id))
+		return self.getChannelsPageUserHasNotJoined(team_id, 0, 20000)
 
 	def getChannelsPageUserHasNotJoined(self, team_id, offset=0, limit=50):
 		return self.get('/teams/{}/channels/more/{}/{}'.format(
@@ -653,4 +653,3 @@ class MattermostApi:
 	def deleteIncomingWebhookForTeam(self, team_id, webhook_id):
 		jsonData = {'id': webhook_id}
 		return self.post('/teams/{}/hooks/incoming/delete'.format(team_id), jsonData)
-
