@@ -334,7 +334,7 @@ class MattermostBackend(ErrBot):
             channelid
         """
         txtrep = txtrep.strip()
-        if txtrep.startswith('#'):
+        if txtrep.startswith('~'):
             # Channel
             channelid = self.channelname_to_channelid(txtrep[1:])
             if channelid is not None:
