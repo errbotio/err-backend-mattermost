@@ -327,11 +327,11 @@ class MattermostBackend(ErrBot):
 		Supports strings with the following formats::
 
 			@username
-			#channelname
+			~channelname
 			channelid
 		"""
 		txtrep = txtrep.strip()
-		if txtrep.startswith('#'):
+		if txtrep.startswith('~'):
 			# Channel
 			channelid = self.channelname_to_channelid(txtrep[1:])
 			if channelid is not None:
