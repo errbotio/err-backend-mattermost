@@ -129,8 +129,8 @@ class MattermostBackend(ErrBot):
 		identity = config.BOT_IDENTITY
 		self._login = identity.get('login') # Todo to docs
 		self._password = identity.get('password')
-		self._scheme = identity.get('scheme') # Todo to docs
-		self._port = identity.get('port') # Todo to docs
+		self._scheme = identity.get('scheme', 'https') # Todo to docs
+		self._port = identity.get('port', 8065) # Todo to docs
 		self.url = identity.get('server').rstrip('/')
 		self.insecure = identity.get('insecure', False)
 		self.timeout = identity.get('timeout', DEFAULT_TIMEOUT)
