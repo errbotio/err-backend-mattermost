@@ -31,10 +31,12 @@ BOT_EXTRA_BACKEND_DIR = '/path/to/backends'
 BOT_ADMINS = ('@yourname') # Names need the @ in front!
 
 BOT_IDENTITY = {
-        'email': 'bot@email.de',
+        'login': 'bot@email.de',
         'password': 'botpassword',
         'insecure': False, # Optional, default value is False. Set to true for self signed certificates
-        'server': 'https://mattermost.server.com',
+        'scheme': 'https',
+        'server': 'mattermost.server.com',
+        'port': 8065,
         'team': 'nameoftheteam',
         'timeout': 30 # Optional, default value is 30. If the webserver disconnects idle connections later/earlier change this value
 }
