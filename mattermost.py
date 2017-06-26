@@ -171,22 +171,8 @@ class MattermostBackend(ErrBot):
 			'posted': self._message_event_handler,
 			'status_change': self._status_change_event_handler ,
 			'hello': self._hello_event_handler,
-			# These are all the other websocket events mattermost sends
-			# TODO: should I send these to the plugins somehow??
-			# 'new_user': ,
-			# 'typing': ,
-			# 'post_edited': ,
-			# 'post_deleted': ,
-			# 'channel_deleted': ,
-			# 'channel_viewed': ,
-			# 'direct_added': ,
-			# 'leave_team': ,
 			'user_added': self._room_joined_event_handler,
-			# 'user_updated': ,
 			'user_removed': self._room_left_event_handler,
-			# 'preference_changed': ,
-			# 'ephemeral_message': ,
-			# 'webrtc'
 		}
 
 		event = payload['event']
