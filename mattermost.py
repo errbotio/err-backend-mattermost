@@ -2,7 +2,6 @@ import logging
 import json
 import asyncio
 from functools import lru_cache
-
 from errbot.backends.base import (
     Message, Presence, ONLINE, AWAY, Person, UserDoesNotExistError,
     Room, RoomError, RoomDoesNotExistError, RoomOccupant,
@@ -10,8 +9,7 @@ from errbot.backends.base import (
 from errbot.core import ErrBot
 from errbot.rendering import md
 from errbot.utils import split_string_after
-
-from mattermostclient import MattermostApiResponseError, MattermostClient
+from mattermostdriver import Driver
 
 
 log = logging.getLogger('errbot.backends.mattermost')
@@ -129,8 +127,10 @@ class MattermostBackend(ErrBot):
 	def __init__(self, config):
 		super().__init__(config)
 		identity = config.BOT_IDENTITY
-		self._email = identity.get('email')
+		self._login = identity.get('login') # Todo to docs
 		self._password = identity.get('password')
+		self._scheme = identity.get('scheme') # Todo to docs
+		self._port = identity.get('port') # Todo to docs
 		self.url = identity.get('server').rstrip('/')
 		self.insecure = identity.get('insecure', False)
 		self.timeout = identity.get('timeout', DEFAULT_TIMEOUT)
@@ -139,6 +139,7 @@ class MattermostBackend(ErrBot):
 		self.token = ''
 		self.bot_identifier = None
 		self.client = None
+		self.driver = None
 		self.md = md()
 
 	@property
@@ -152,7 +153,7 @@ class MattermostBackend(ErrBot):
 	def username_to_userid(self, name):
 		"""Converts a name prefixed with @ to the userid"""
 		name = name.lstrip('@')
-		user = self.client.api.getUserByUsername(name)
+		user = self.client.users_api().get_user_by_username(username=name)
 		if user is None:
 			raise UserDoesNotExistError("Cannot find user {}".format(name))
 		return user['id']
@@ -305,16 +306,10 @@ class MattermostBackend(ErrBot):
 	def get_direct_channel(self, userid, otherUserid):
 		"""
 		Get the direct channel to another user.
-		If it does not exist, we need to create it.
+		If it does not exist, it will be created.
 		"""
-		channels = self.channels()
-		for channel in channels:
-			if channel['type'] == 'D':
-				# The channelname should contain both users IDs
-				if userid in channel['name'] and otherUserid in channel['name']:
-					return channel
 		try:
-			return self.client.api.createDirectChannel(self.teamid, otherUserid)
+			return self.client.channels_api().create_direct_message_channel(options=[userid, otherUserid])
 		except Exception:
 			raise RoomDoesNotExistError("Could not find Direct Channel for users with ID {} and {}".format(
 				userid, otherUserid
@@ -362,24 +357,26 @@ class MattermostBackend(ErrBot):
 		return identifier
 
 	def serve_once(self):
-		self.client = MattermostClient(
-			self.url,
-			verify=not self.insecure,
-			timeout=self.timeout,
-		)
-		self.client.login(self._email, self._password)
+		self.driver = Driver({
+			'scheme': self._scheme,
+			'url': self.url,
+			'port': self._port,
+			'verify': not self.insecure,
+			'timeout': self.timeout,
+			'login_id': self._login,
+			'password': self._password
+		})
+		self.driver.login()
+		self.client = self.driver.client
 
-		try:
-			self.teamid = self.client.api.getTeamObjectByName(self.team)['id']
-		except MattermostApiResponseError as e:
-			raise TeamDoesNotExistError('No Team with name {} found.'.format(self.team))
+		self.teamid = self.client.teams_api().get_team_by_name(self.team)['id']
 
-		self.token = self.client.api.token
+		self.token = self.client.token
 
 		self.bot_identifier = MattermostPerson(self.client, userid=self.client.userid, teamid=self.teamid)
 
 		try:
-			loop = self.client.connect(self.mattermost_event_handler)
+			loop = self.driver.init_websocket(self.mattermost_event_handler)
 			self.reset_reconnection_count()
 			loop.run_forever()
 		except KeyboardInterrupt:
@@ -421,7 +418,10 @@ class MattermostBackend(ErrBot):
 			parts = self.prepare_message_body(body, limit)
 
 			for part in parts:
-				self.client.api.createPost(team_id=self.teamid, channel_id=to_channel_id, message=part)
+				self.client.posts_api().create_post({
+					'channel_id': to_channel_id,
+					'message': part,
+				})
 		except Exception:
 			log.exception(
 				"An exception occurred while trying to send the following message "
@@ -466,7 +466,7 @@ class MattermostBackend(ErrBot):
 		return self.bot_identifier.userid == message.frm.userid
 
 	def shutdown(self):
-		self.client.api.logout()
+		self.driver.logout()
 		super().shutdown()
 
 	def query_room(self, room):
@@ -488,9 +488,10 @@ class MattermostBackend(ErrBot):
 
 	def channels(self, joinedOnly=False):
 		channels = []
-		response = self.client.api.getChannelsForUserInTeam(self.teamid)
-		if not joinedOnly:
-			response += self.client.api.getChannelsUserHasNotJoined(self.teamid)
+		response = self.client.channels_api().get_channels_for_user(team_id=self.teamid, user_id='me')
+		# TODO: There doesn't seem to be an apiv4 equivalent right now
+		# if not joinedOnly:
+		# 	response += self.client.api.getChannelsUserHasNotJoined(self.teamid)
 		for channel in response:
 			if channel not in channels:
 				channels.append(channel)
@@ -504,7 +505,7 @@ class MattermostBackend(ErrBot):
 
 	def channelid_to_channelname(self, channelid):
 		"""Convert the channelid in the current team to the channel name"""
-		channel = self.client.api.getChannel(team_id=self.teamid, channel_id=channelid)
+		channel = self.client.channels_api().get_channel(channel_id=channelid)
 		if 'name' not in channel['channel']:
 			raise RoomDoesNotExistError("No channel with ID {} exists in team with ID {}".format(
 				id, self.teamid
@@ -513,7 +514,7 @@ class MattermostBackend(ErrBot):
 
 	def channelname_to_channelid(self, name):
 		"""Convert the channelname in the current team to the channel id"""
-		channel = self.client.api.getChannelByName(team_id=self.teamid, channel_name=name)
+		channel = self.client.channels_api().get_channel_by_name(team_id=self.teamid, channel_name=name)
 		if 'id' not in channel:
 			raise RoomDoesNotExistError("No channel with name {} exists in team with ID {}".format(
 				name, self.teamid
@@ -561,7 +562,7 @@ class MattermostRoom(Room):
 
 	@property
 	def _channel(self):
-		channel = self.client.api.getChannelByName(team_id=self.teamid, channel_name=self.name)
+		channel = self.client.channels_api().get_channel_by_name(team_id=self.teamid, channel_name=self.name)
 		if 'status_code' in channel and channel['status_code'] != 200:
 			raise RoomDoesNotExistError("{}: {}".format(channel['status_code'], channel['message']))
 		return channel
@@ -576,13 +577,13 @@ class MattermostRoom(Room):
 
 	@property
 	def exists(self):
-		channels = self.client.api.getChannelsForUserInTeam(self.teamid)
-		channels += self.client.api.getChannelsUserHasNotJoined(self.teamid)
+		channels = self.client.channels_api().get_channels_for_user(user_id='me', team_id=self.teamid)
+		#TODO: apiv4 missing? channels += self.client.api.getChannelsUserHasNotJoined(team_id=self.teamid)
 		return len([c for c in channels if c['name'] == self.name]) > 0
 
 	@property
 	def joined(self):
-		channels = self.client.api.getChannelsForUserInTeam(self.teamid)
+		channels = self.client.channels_api().get_channels_for_user(user_id='me', team_id=self.teamid)
 		return len([c for c in channels if c['name'] == self.name]) > 0
 
 	@property
@@ -594,10 +595,10 @@ class MattermostRoom(Room):
 
 	@topic.setter
 	def topic(self, topic):
-		try:
-			self.client.api.updateChannel(self.teamid, self.id, header=topic)
-		except MattermostApiResponseError as e:
-			raise RoomError("Could not update room topic. {}".format(e))
+		self.client.channels_api().update_channel(
+			channel_id=self.id,
+			options={'header': topic, 'id': self.id}
+		)
 
 	@property
 	def purpose(self):
@@ -608,18 +609,23 @@ class MattermostRoom(Room):
 
 	@purpose.setter
 	def purpose(self, purpose):
-		try:
-			self.client.api.updateChannel(self.teamid, self.id, purpose=purpose)
-		except MattermostApiResponseError as e:
-			raise RoomError("Could not update room purpose. {}".format(e))
+		self.client.channels_api().update_channel(
+			channel_id=self.id,
+			options={'purpose': purpose, 'id': self.id}
+		)
 
 	@property
 	def occupants(self):
-		member_count = self.client.api.getChannelStats(self.teamid, self.id)['member_count']
+		member_count = self.client.channels_api().get_channel_statistics(channel_id=self.id)['member_count']
 		members = {}
 		userPageLimit = 200
 		for start in range(0, member_count, userPageLimit):
-			members.update(self.client.api.getUsersInChannel(self.teamid, self.id, offset=start, limit=userPageLimit))
+			members.update(
+				self.client.channels_api().get_channel_members(
+					channel_id=self.id,
+					params={'page': start, 'per_page': userPageLimit}
+				)
+			)
 		return [MattermostRoomOccupant(self.client, userid=m, teamid=self.teamid, channelid=self.id, bot=self._bot) for m in members]
 
 	def create(self, private=False):
@@ -630,10 +636,15 @@ class MattermostRoom(Room):
 		else:
 			log.info("Creating public channel {}".format(str(self)))
 		try:
-			self.client.api.createChannel(self.teamid, self.name, display_name=self.name, type=type)
-			self.client.api.getChannelByName(self.teamid, self.name)
+			self.client.channels_api().create_channel(options={
+				'team_id': self.teamid,
+				'name': self.name,
+				'display_name': self.name,
+				'type': type
+			})
+			self.client.channels_api().get_channel_by_name(team_id=self.teamid, channel_name=self.name)
 			self._bot.callback_room_joined(self)
-		except MattermostApiResponseError as e:
+		except Exception as e: # TODO: better exception handling?
 			raise RoomError(e)
 
 	def join(self, username: str=None, password: str=None):
@@ -642,25 +653,29 @@ class MattermostRoom(Room):
 			self.create() # This always creates a public room!
 		log.info("Joining channel {}".format(str(self)))
 		try:
-			self.client.api.joinChannelByName(self.teamid, self.name)
-			self.client.api.joinChannel(self.teamid, self.id)
+			self.client.channels_api().add_user(
+				channel_id=self._id,
+				options={
+					'user_id': self._bot.userid
+				}
+			) # Todo: Not optimal
 			self._bot.callback_room_joined(self)
-		except MattermostApiResponseError as e:
+		except Exception as e: # TODO: better exception handling?
 			raise RoomError(e)
 
 	def leave(self, reason: str=None):
 		log.info('Leaving channel {} ({})'.format(str(self), self.id))
 		try:
-			self.client.api.leaveChannel(self.teamid, self.id)
+			self.client.channels_api().remove_user_from_channel(channel_id=self.id, user_id=self._bot.id)
 			self._bot.callback_room_left(self)
-		except MattermostApiResponseError as e:
+		except Exception as e: # TODO: better exception handling?
 			raise RoomError(e)
 
 	def destroy(self):
 		try:
-			self.client.api.deleteChannel(self.teamid, self.id)
+			self.client.channels_api().delete_channel(channel_id=self.id)
 			self._bot.callback_room_left(self)
-		except MattermostApiResponseError as e:
+		except Exception as e: # TODO: better exception handling?
 			log.debug('Could not delete the channel. Are you a member of the channel?')
 			raise RoomError(e)
 		self._id = None
