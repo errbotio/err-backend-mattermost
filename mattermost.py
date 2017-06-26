@@ -31,11 +31,11 @@ class MattermostPerson(Person):
 	"""
 	A Person in Mattermost
 	"""
-	def __init__(self, client, userid=None, channelid=None, teamid=None):
+	def __init__(self, driver, userid=None, channelid=None, teamid=None):
 		self._userid = userid
 		self._channelid = channelid
 		self._teamid = teamid
-		self._client = client
+		self._driver = driver
 
 	@property
 	def userid(self):
@@ -43,7 +43,7 @@ class MattermostPerson(Person):
 
 	@property
 	def username(self):
-		user = self._client.api.getUserIDs([self.userid])[self.userid]
+		user = self._driver.api['users'].get_user(user_id=self.userid)
 		if 'username' not in user:
 			log.error("Can't find username for user with ID {}".format(self._userid))
 			return "<{}>".format(self._userid)
@@ -62,11 +62,11 @@ class MattermostPerson(Person):
 
 	@property
 	def domain(self):
-		return self._client.url
+		return self._driver.client.url
 
 	@property
 	def fullname(self):
-		user = self._client.api.getCurrentUser()
+		user = self._driver.api['users'].get_user(user_id=self.userid)
 		if 'first_name' not in user and 'last_name' not in user:
 			log.error("No first or last name for user with ID {}".format(self._userid))
 			return "<{}>".format(self._userid)
@@ -138,7 +138,6 @@ class MattermostBackend(ErrBot):
 		self.teamid = ''
 		self.token = ''
 		self.bot_identifier = None
-		self.client = None
 		self.driver = None
 		self.md = md()
 
@@ -153,7 +152,7 @@ class MattermostBackend(ErrBot):
 	def username_to_userid(self, name):
 		"""Converts a name prefixed with @ to the userid"""
 		name = name.lstrip('@')
-		user = self.client.api.users.get_user_by_username(username=name)
+		user = self.driver.api.users.get_user_by_username(username=name)
 		if user is None:
 			raise UserDoesNotExistError("Cannot find user {}".format(name))
 		return user['id']
@@ -264,11 +263,11 @@ class MattermostBackend(ErrBot):
 		# TODO: slack backend has attachments here, have to see how I need these here
 		# TODO: Slack handles bots here, but I am not sure if bot users is a concept in mattermost
 		if channelType == 'D':
-			message.frm = MattermostPerson(self.client, userid=userid, channelid=channelid, teamid=self.teamid)
+			message.frm = MattermostPerson(self.driver, userid=userid, channelid=channelid, teamid=self.teamid)
 			message.to = MattermostPerson(
-				self.client, userid=self.bot_identifier.userid, channelid=channelid, teamid=self.teamid)
+				self.driver, userid=self.bot_identifier.userid, channelid=channelid, teamid=self.teamid)
 		elif channelType == 'O' or channelType == 'P':
-			message.frm = MattermostRoomOccupant(self.client, userid=userid, channelid=channelid, teamid=self.teamid, bot=self)
+			message.frm = MattermostRoomOccupant(self.driver, userid=userid, channelid=channelid, teamid=self.teamid, bot=self)
 			message.to = MattermostRoom(channel, teamid=self.teamid, bot=self)
 		else:
 			log.warning('Unknown channel type \'{}\'! Unable to handle {}.'.format(
@@ -284,7 +283,7 @@ class MattermostBackend(ErrBot):
 
 	def _status_change_event_handler(self, message):
 		"""Event handler for the 'presence_change' event"""
-		idd = MattermostPerson(self.client, message['data']['user_id'])
+		idd = MattermostPerson(self.driver, message['data']['user_id'])
 		status = message['data']['status']
 		if status == 'online':
 			status = ONLINE
@@ -309,7 +308,7 @@ class MattermostBackend(ErrBot):
 		If it does not exist, it will be created.
 		"""
 		try:
-			return self.client.api.channels.create_direct_message_channel(options=[userid, otherUserid])
+			return self.driver.api['channels'].create_direct_message_channel(options=[userid, otherUserid])
 		except Exception:
 			raise RoomDoesNotExistError("Could not find Direct Channel for users with ID {} and {}".format(
 				userid, otherUserid
@@ -341,7 +340,7 @@ class MattermostBackend(ErrBot):
 				userid = txtrep
 
 			if userid is not None:
-				return MattermostPerson(self.client, userid=userid, channelid=self.get_direct_channel(self.userid, userid)['id'], teamid=self.teamid)
+				return MattermostPerson(self.driver, userid=userid, channelid=self.get_direct_channel(self.userid, userid)['id'], teamid=self.teamid)
 
 		raise Exception(
 			'Invalid or unsupported Mattermost identifier: %s' % txtrep
@@ -367,16 +366,16 @@ class MattermostBackend(ErrBot):
 			'password': self._password
 		})
 		self.driver.login()
-		self.client = self.driver.api
 
-		self.teamid = self.client.teams.get_team_by_name(self.team)['id']
+		self.teamid = self.driver.api['teams'].get_team_by_name(name=self.team)['id']
+		userid = self.driver.api['users'].get_user(user_id='me')['id']
 
-		self.token = self.client.token
+		self.token = self.driver.client.token
 
-		self.bot_identifier = MattermostPerson(self.client, userid=self.client.userid, teamid=self.teamid)
+		self.bot_identifier = MattermostPerson(self.driver, userid=userid, teamid=self.teamid)
 
 		try:
-			loop = self.driver.init_websocket(self.mattermost_event_handler)
+			loop = self.driver.init_websocket(event_handler=self.mattermost_event_handler)
 			self.reset_reconnection_count()
 			loop.run_forever()
 		except KeyboardInterrupt:
@@ -418,7 +417,7 @@ class MattermostBackend(ErrBot):
 			parts = self.prepare_message_body(body, limit)
 
 			for part in parts:
-				self.client.posts.create_post({
+				self.driver.api['posts'].create_post(options={
 					'channel_id': to_channel_id,
 					'message': part,
 				})
@@ -488,10 +487,10 @@ class MattermostBackend(ErrBot):
 
 	def channels(self, joinedOnly=False):
 		channels = []
-		response = self.client.channels.get_channels_for_user(team_id=self.teamid, user_id='me')
+		response = self.driver.api['channels'].get_channels_for_user(team_id=self.teamid, user_id=self.userid)
 		# TODO: There doesn't seem to be an apiv4 equivalent right now
 		# if not joinedOnly:
-		# 	response += self.client.getChannelsUserHasNotJoined(self.teamid)
+		# 	response += self.driver.api.getChannelsUserHasNotJoined(self.teamid)
 		for channel in response:
 			if channel not in channels:
 				channels.append(channel)
@@ -505,16 +504,16 @@ class MattermostBackend(ErrBot):
 
 	def channelid_to_channelname(self, channelid):
 		"""Convert the channelid in the current team to the channel name"""
-		channel = self.client.channels.get_channel(channel_id=channelid)
-		if 'name' not in channel['channel']:
+		channel = self.driver.api['channels'].get_channel(channel_id=channelid)
+		if 'name' not in channel:
 			raise RoomDoesNotExistError("No channel with ID {} exists in team with ID {}".format(
 				id, self.teamid
 			))
-		return channel['channel']['name']
+		return channel['name']
 
 	def channelname_to_channelid(self, name):
 		"""Convert the channelname in the current team to the channel id"""
-		channel = self.client.channels.get_channel_by_name(team_id=self.teamid, channel_name=name)
+		channel = self.driver.api['channels'].get_channel_by_name(team_id=self.teamid, channel_name=name)
 		if 'id' not in channel:
 			raise RoomDoesNotExistError("No channel with name {} exists in team with ID {}".format(
 				name, self.teamid
@@ -542,7 +541,7 @@ class MattermostRoom(Room):
 		self._teamid = teamid
 		self._id = None if channelid is None else channelid
 		self._bot = bot
-		self.client = bot.client
+		self.driver = bot.driver
 
 	@property
 	def teamid(self):
@@ -562,7 +561,7 @@ class MattermostRoom(Room):
 
 	@property
 	def _channel(self):
-		channel = self.client.channels.get_channel_by_name(team_id=self.teamid, channel_name=self.name)
+		channel = self.driver.api['channels'].get_channel_by_name(team_id=self.teamid, channel_name=self.name)
 		if 'status_code' in channel and channel['status_code'] != 200:
 			raise RoomDoesNotExistError("{}: {}".format(channel['status_code'], channel['message']))
 		return channel
@@ -577,13 +576,13 @@ class MattermostRoom(Room):
 
 	@property
 	def exists(self):
-		channels = self.client.channels.get_channels_for_user(user_id='me', team_id=self.teamid)
-		#TODO: apiv4 missing? channels += self.client.getChannelsUserHasNotJoined(team_id=self.teamid)
+		channels = self.driver.api['channels'].get_channels_for_user(user_id='me', team_id=self.teamid)
+		#TODO: apiv4 missing? channels += self.driver.api[''].getChannelsUserHasNotJoined(team_id=self.teamid)
 		return len([c for c in channels if c['name'] == self.name]) > 0
 
 	@property
 	def joined(self):
-		channels = self.client.channels.get_channels_for_user(user_id='me', team_id=self.teamid)
+		channels = self.driver.api['channels'].get_channels_for_user(user_id='me', team_id=self.teamid)
 		return len([c for c in channels if c['name'] == self.name]) > 0
 
 	@property
@@ -595,7 +594,7 @@ class MattermostRoom(Room):
 
 	@topic.setter
 	def topic(self, topic):
-		self.client.channels.update_channel(
+		self.driver.api['channels'].update_channel(
 			channel_id=self.id,
 			options={'header': topic, 'id': self.id}
 		)
@@ -609,24 +608,24 @@ class MattermostRoom(Room):
 
 	@purpose.setter
 	def purpose(self, purpose):
-		self.client.channels.update_channel(
+		self.driver.api['channels'].update_channel(
 			channel_id=self.id,
 			options={'purpose': purpose, 'id': self.id}
 		)
 
 	@property
 	def occupants(self):
-		member_count = self.client.channels.get_channel_statistics(channel_id=self.id)['member_count']
+		member_count = self.driver.api['channels'].get_channel_statistics(channel_id=self.id)['member_count']
 		members = {}
 		userPageLimit = 200
 		for start in range(0, member_count, userPageLimit):
 			members.update(
-				self.client.channels.get_channel_members(
+				self.driver.api['channels'].get_channel_members(
 					channel_id=self.id,
 					params={'page': start, 'per_page': userPageLimit}
 				)
 			)
-		return [MattermostRoomOccupant(self.client, userid=m, teamid=self.teamid, channelid=self.id, bot=self._bot) for m in members]
+		return [MattermostRoomOccupant(self.driver, userid=m, teamid=self.teamid, channelid=self.id, bot=self._bot) for m in members]
 
 	def create(self, private=False):
 		type = 'O'
@@ -636,13 +635,13 @@ class MattermostRoom(Room):
 		else:
 			log.info("Creating public channel {}".format(str(self)))
 		try:
-			self.client.channels.create_channel(options={
+			self.driver.api['channels'].create_channel(options={
 				'team_id': self.teamid,
 				'name': self.name,
 				'display_name': self.name,
 				'type': type
 			})
-			self.client.channels.get_channel_by_name(team_id=self.teamid, channel_name=self.name)
+			self.driver.api['channels'].get_channel_by_name(team_id=self.teamid, channel_name=self.name)
 			self._bot.callback_room_joined(self)
 		except Exception as e: # TODO: better exception handling?
 			raise RoomError(e)
@@ -653,7 +652,7 @@ class MattermostRoom(Room):
 			self.create() # This always creates a public room!
 		log.info("Joining channel {}".format(str(self)))
 		try:
-			self.client.channels.add_user(
+			self.driver.api['channels'].add_user(
 				channel_id=self._id,
 				options={
 					'user_id': self._bot.userid
@@ -666,14 +665,14 @@ class MattermostRoom(Room):
 	def leave(self, reason: str=None):
 		log.info('Leaving channel {} ({})'.format(str(self), self.id))
 		try:
-			self.client.channels.remove_user_from_channel(channel_id=self.id, user_id=self._bot.id)
+			self.driver.api['channels'].remove_user_from_channel(channel_id=self.id, user_id=self._bot.id)
 			self._bot.callback_room_left(self)
 		except Exception as e: # TODO: better exception handling?
 			raise RoomError(e)
 
 	def destroy(self):
 		try:
-			self.client.channels.delete_channel(channel_id=self.id)
+			self.driver.api['channels'].delete_channel(channel_id=self.id)
 			self._bot.callback_room_left(self)
 		except Exception as e: # TODO: better exception handling?
 			log.debug('Could not delete the channel. Are you a member of the channel?')
@@ -681,7 +680,18 @@ class MattermostRoom(Room):
 		self._id = None
 
 	def invite(self, *args):
-		users_not_in_channel = self.client.getUsersNotInChannel(self.teamid, self.id)
+		user_count = self.driver.api['teams'].get_team_stats(team_id=self.teamid)['total_member_count']
+		user_page_limit = 200
+		users_not_in_channel = []
+		for start in range(0, user_count, user_page_limit):
+			users_not_in_channel.extend(self.driver.api['users'].get_users(
+				params={
+					'page': start,
+					'per_page': user_page_limit,
+					'in_team': self.teamid,
+					'not_in_channel': self.id
+				}
+			))
 		users = {}
 		for user in users_not_in_channel:
 			users.update({users_not_in_channel[user]['username']: users_not_in_channel[user]['id']})
@@ -691,7 +701,7 @@ class MattermostRoom(Room):
 			log.info('Inviting {} into {} ({})'.format(user, str(self), self.id))
 
 			# try: TODO
-			self.client.addUserToChannel(self.teamid, self.id, users[user])
+			self.driver.api['channels'].add_user(channel_id=self.id, options={'user_id': users[user]})
 			# except MattermostApiResponseError as e:
 			# 	raise RoomError("Unable to invite {} to channel {} ({})".format(
 			# 		user, str(self), self.id
