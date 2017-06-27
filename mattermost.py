@@ -3,14 +3,17 @@ import json
 import asyncio
 from functools import lru_cache
 from errbot.backends.base import (
-    Message, Presence, ONLINE, AWAY, Person, UserDoesNotExistError,
-    Room, RoomError, RoomDoesNotExistError, RoomOccupant,
+	Message, Presence, ONLINE, AWAY, Person, UserDoesNotExistError,
+	Room, RoomError, RoomDoesNotExistError, RoomOccupant,
 )
 from errbot.core import ErrBot
 from errbot.rendering import md
 from errbot.utils import split_string_after
 from mattermostdriver import Driver
-
+from mattermostdriver.client import (
+	InvalidOrMissingParameters, NoAccessTokenProvided, NotEnoughPermissions, FeatureDisabled,
+	ContentTooLarge, ResourceNotFound
+)
 
 log = logging.getLogger('errbot.backends.mattermost')
 
@@ -21,10 +24,6 @@ MATTERMOST_MESSAGE_LIMIT = 3994
 # Default websocket timeout - this is needed to send a heartbeat
 # to keep the connection alive
 DEFAULT_TIMEOUT = 30
-
-
-class TeamDoesNotExistError(Exception):
-	"""Raised when team does not exist"""
 
 
 class MattermostPerson(Person):
@@ -184,7 +183,7 @@ class MattermostBackend(ErrBot):
 		try:
 			event_handler(payload)
 		except Exception:
-			log.exception("{} event handler reaised an exception".format(event))
+			log.exception("{} event handler raised an exception".format(event))
 
 	def _room_joined_event_handler(self, message):
 		log.debug('User added to channel')
@@ -295,7 +294,7 @@ class MattermostBackend(ErrBot):
 		"""
 		try:
 			return self.driver.api['channels'].create_direct_message_channel(options=[userid, otherUserid])
-		except Exception:
+		except (InvalidOrMissingParameters, NotEnoughPermissions):
 			raise RoomDoesNotExistError("Could not find Direct Channel for users with ID {} and {}".format(
 				userid, otherUserid
 			))
@@ -407,7 +406,7 @@ class MattermostBackend(ErrBot):
 					'channel_id': to_channel_id,
 					'message': part,
 				})
-		except Exception:
+		except (InvalidOrMissingParameters, NotEnoughPermissions):
 			log.exception(
 				"An exception occurred while trying to send the following message "
 				"to %s: %s" % (to_name, message.body)
@@ -629,13 +628,13 @@ class MattermostRoom(Room):
 			})
 			self.driver.api['channels'].get_channel_by_name(team_id=self.teamid, channel_name=self.name)
 			self._bot.callback_room_joined(self)
-		except Exception as e: # TODO: better exception handling?
+		except (NotEnoughPermissions, ResourceNotFound) as e:
 			raise RoomError(e)
 
 	def join(self, username: str=None, password: str=None):
 		if not self.exists:
 			log.info("Channel {} doesn't seem exist, trying to create it.".format(str(self)))
-			self.create() # This always creates a public room!
+			self.create()  # This always creates a public room!
 		log.info("Joining channel {}".format(str(self)))
 		try:
 			self.driver.api['channels'].add_user(
@@ -643,9 +642,9 @@ class MattermostRoom(Room):
 				options={
 					'user_id': self._bot.userid
 				}
-			) # Todo: Not optimal
+			)
 			self._bot.callback_room_joined(self)
-		except Exception as e: # TODO: better exception handling?
+		except (InvalidOrMissingParameters, NotEnoughPermissions) as e:
 			raise RoomError(e)
 
 	def leave(self, reason: str=None):
@@ -653,14 +652,14 @@ class MattermostRoom(Room):
 		try:
 			self.driver.api['channels'].remove_user_from_channel(channel_id=self.id, user_id=self._bot.id)
 			self._bot.callback_room_left(self)
-		except Exception as e: # TODO: better exception handling?
+		except (InvalidOrMissingParameters, NotEnoughPermissions) as e:
 			raise RoomError(e)
 
 	def destroy(self):
 		try:
 			self.driver.api['channels'].delete_channel(channel_id=self.id)
 			self._bot.callback_room_left(self)
-		except Exception as e: # TODO: better exception handling?
+		except (InvalidOrMissingParameters, NotEnoughPermissions) as e:
 			log.debug('Could not delete the channel. Are you a member of the channel?')
 			raise RoomError(e)
 		self._id = None
@@ -686,12 +685,12 @@ class MattermostRoom(Room):
 				raise UserDoesNotExistError('User \'{}\' not found'.format(user))
 			log.info('Inviting {} into {} ({})'.format(user, str(self), self.id))
 
-			# try: TODO
-			self.driver.api['channels'].add_user(channel_id=self.id, options={'user_id': users[user]})
-			# except MattermostApiResponseError as e:
-			# 	raise RoomError("Unable to invite {} to channel {} ({})".format(
-			# 		user, str(self), self.id
-			# 	))
+			try:
+				self.driver.api['channels'].add_user(channel_id=self.id, options={'user_id': users[user]})
+			except (InvalidOrMissingParameters, NotEnoughPermissions):
+				raise RoomError("Unable to invite {} to channel {} ({})".format(
+					user, str(self), self.id
+				))
 
 	def __str__(self):
 		return "~{}".format(self._name)
