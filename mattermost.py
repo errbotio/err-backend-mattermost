@@ -152,7 +152,7 @@ class MattermostBackend(ErrBot):
 	def username_to_userid(self, name):
 		"""Converts a name prefixed with @ to the userid"""
 		name = name.lstrip('@')
-		user = self.driver.api.users.get_user_by_username(username=name)
+		user = self.driver.api['users'].get_user_by_username(username=name)
 		if user is None:
 			raise UserDoesNotExistError("Cannot find user {}".format(name))
 		return user['id']
