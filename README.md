@@ -7,6 +7,8 @@ https://github.com/errbotio/errbot/blob/master/errbot/backends/slack.py
 (If there is an Issue with any code I reused, please give me a message!)
 
 It probably has quite a few bugs as it is.
+## Experimental APIv4 Support
+You can try out the apiv4 branch if you want some unstable experience! :-)
 
 ### KNOWN (POSSIBLE) ISSUES
 
