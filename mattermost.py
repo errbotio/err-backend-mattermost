@@ -229,15 +229,16 @@ class MattermostBackend(ErrBot):
 			channel = channelid
 
 		text = ''
-		file_ids = []
 		post_id = ''
+		file_ids = None
 		userid = None
 
 		if 'post' in data:
 			post = json.loads(data['post'])
 			text = post['message']
 			userid = post['user_id']
-			file_ids = post['file_ids']
+			if 'file_ids' in post:
+				file_ids = post['file_ids']
 			post_id = post['id']
 			if 'type' in post and post['type'] == 'system_add_remove':
 				log.info("Ignoring message from System")
@@ -258,7 +259,6 @@ class MattermostBackend(ErrBot):
 		msg = Message(
 			text,
 			extras={
-				'attachments': file_ids,
 				'mattermost_event': message,
 				'url': '{scheme:s}://{domain:s}:{port:s}/{teamname:s}/pl/{postid:s}'.format(
 					scheme=self.driver.options['scheme'],
@@ -269,6 +269,8 @@ class MattermostBackend(ErrBot):
 				)
 			}
 		)
+		if file_ids:
+			msg['attachments'] = file_ids
 
 		# TODO: Slack handles bots here, but I am not sure if bot users is a concept in mattermost
 		if channel_type == 'D':
