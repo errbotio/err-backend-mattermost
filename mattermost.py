@@ -270,7 +270,7 @@ class MattermostBackend(ErrBot):
 			}
 		)
 		if file_ids:
-			msg['attachments'] = file_ids
+			msg.extras['attachments'] = file_ids
 
 		# TODO: Slack handles bots here, but I am not sure if bot users is a concept in mattermost
 		if channel_type == 'D':
