@@ -12,6 +12,10 @@ The master branch is now set to use the new APIv4 for mattermost.
 Some things have changed, please see the updated requirements and
 changed BOT_IDENTITY parameters.
 
+ - 'email' is now 'login'
+ - 'server' is the url without https:// or the port. Port and scheme have their own option now.
+ - You need to `pip install mattermostdriver`
+
 ### APIv3
 Use the APIv3 branch for that.
 
