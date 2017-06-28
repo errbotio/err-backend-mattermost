@@ -229,12 +229,16 @@ class MattermostBackend(ErrBot):
 			channel = channelid
 
 		text = ''
+		file_ids = []
+		post_id = ''
 		userid = None
 
 		if 'post' in data:
 			post = json.loads(data['post'])
 			text = post['message']
 			userid = post['user_id']
+			file_ids = post['file_ids']
+			post_id = post['id']
 			if 'type' in post and post['type'] == 'system_add_remove':
 				log.info("Ignoring message from System")
 				return
@@ -251,16 +255,29 @@ class MattermostBackend(ErrBot):
 			# TODO: Only user, not channel mentions are in here at the moment
 			mentions = self.mentions_build_identifier(json.loads(data['mentions']))
 
-		message = Message(text)
-		# TODO: slack backend has attachments here, have to see how I need these here
+		msg = Message(
+			text,
+			extras={
+				'attachments': file_ids,
+				'mattermost_event': message,
+				'url': '{scheme:s}://{domain:s}:{port:s}/{teamname:s}/pl/{postid:s}'.format(
+					scheme=self.driver.options['scheme'],
+					domain=self.driver.options['url'],
+					port=str(self.driver.options['port']),
+					teamname=self.team,
+					postid=post_id
+				)
+			}
+		)
+
 		# TODO: Slack handles bots here, but I am not sure if bot users is a concept in mattermost
 		if channel_type == 'D':
-			message.frm = MattermostPerson(self.driver, userid=userid, channelid=channelid, teamid=self.teamid)
-			message.to = MattermostPerson(
+			msg.frm = MattermostPerson(self.driver, userid=userid, channelid=channelid, teamid=self.teamid)
+			msg.to = MattermostPerson(
 				self.driver, userid=self.bot_identifier.userid, channelid=channelid, teamid=self.teamid)
 		elif channel_type == 'O' or channel_type == 'P':
-			message.frm = MattermostRoomOccupant(self.driver, userid=userid, channelid=channelid, teamid=self.teamid, bot=self)
-			message.to = MattermostRoom(channel, teamid=self.teamid, bot=self)
+			msg.frm = MattermostRoomOccupant(self.driver, userid=userid, channelid=channelid, teamid=self.teamid, bot=self)
+			msg.to = MattermostRoom(channel, teamid=self.teamid, bot=self)
 		else:
 			log.warning('Unknown channel type \'{}\'! Unable to handle {}.'.format(
 				channel_type,
@@ -268,10 +285,10 @@ class MattermostBackend(ErrBot):
 			))
 			return
 
-		self.callback_message(message)
+		self.callback_message(msg)
 
 		if mentions:
-			self.callback_mention(message, mentions)
+			self.callback_mention(msg, mentions)
 
 	def _status_change_event_handler(self, message):
 		"""Event handler for the 'presence_change' event"""
