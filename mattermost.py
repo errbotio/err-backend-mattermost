@@ -18,7 +18,7 @@ log = logging.getLogger('errbot.backends.mattermost')
 
 # Mattermost message limit is 4000 chars, need to leave some space for
 # backticks when messages are split
-MATTERMOST_MESSAGE_LIMIT = 3994
+MATTERMOST_MESSAGE_LIMIT = 3980
 
 # Default websocket timeout - this is needed to send a heartbeat
 # to keep the connection alive
@@ -438,10 +438,11 @@ class MattermostBackend(ErrBot):
 		Returns:
 			[str]
 		"""
-		fixed_format = body.startswith('```')  # hack to fix the formatting
 		parts = list(split_string_after(body, size_limit))
 
 		if len(parts) == 1:
+			if not body.startswith('```'):
+				parts[0] = '```\n' + parts[0]
 			# If we've got an open fixed block, close it out
 			if parts[0].count('```') % 2 != 0:
 				parts[0] += '\n```\n'
@@ -450,7 +451,7 @@ class MattermostBackend(ErrBot):
 				starts_with_code = part.startswith('```')
 
 				# If we're continuing a fixed block from the last part
-				if fixed_format and not starts_with_code:
+				if not starts_with_code:
 					parts[i] = '```\n' + part
 
 				# If we've got an open fixed block, close it out
