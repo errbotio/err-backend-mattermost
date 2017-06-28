@@ -16,7 +16,7 @@ You can try out the apiv4 branch if you want some unstable experience! :-)
 ### KNOWN (POSSIBLE) ISSUES
 
 - Channelmentions in messages aren't accounted for (Unsure if they need to be)
-- Nothing regarding files works
+- ~~Nothing regarding files works~~ Info about files in a post are attached to the message
 
 ### REQUIREMENTS
 - Python >= 3.4 (3.3 should work too)
