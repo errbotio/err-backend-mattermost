@@ -7,17 +7,21 @@ https://github.com/errbotio/errbot/blob/master/errbot/backends/slack.py
 (If there is an Issue with any code I reused, please give me a message!)
 
 It probably has quite a few bugs as it is.
+
 ## Experimental APIv4 Support
 You can try out the apiv4 branch if you want some unstable experience! :-)
+
+**Attention**: The `BOT_IDENTITY` config options have changed!
 
 ### KNOWN (POSSIBLE) ISSUES
 
 - Channelmentions in messages aren't accounted for (Unsure if they need to be)
-- Nothing regarding files works
+- ~~Nothing regarding files works~~ Info about files in a post are attached to the message
 
 ### REQUIREMENTS
-- Python >= 3.4
+- Python >= 3.4 (3.3 should work too)
 - websockets 3.2
+- [mattermostdriver](https://github.com/Vaelor/python-mattermost-driver) > 0.3.0
 
 ### INSTALLATION
 
@@ -33,22 +37,21 @@ BOT_EXTRA_BACKEND_DIR = '/path/to/backends'
 BOT_ADMINS = ('@yourname') # Names need the @ in front!
 
 BOT_IDENTITY = {
-        'email': 'bot@email.de',
+        # Required
+        'login': 'bot@email.de',
         'password': 'botpassword',
-        'insecure': False, # Optional, default value is False. Set to true for self signed certificates
-        'server': 'https://mattermost.server.com',
         'team': 'nameoftheteam',
-        'timeout': 30 # Optional, default value is 30. If the webserver disconnects idle connections later/earlier change this value
+        'server': 'mattermost.server.com',
+        # Optional
+        'insecure': False, # Default = False. Set to true for self signed certificates
+        'scheme': 'https', # Default = https
+        'port': 8065, # Default = 8065
+        'timeout': 30 # Default = 30. If the webserver disconnects idle connections later/earlier change this value
 }
 ```
 
 - If the bot has problems doing some actions, you should make it system admin, some actions won't work otherwise.
 
-### INFO
-
-This bot brings its own api and mattermost client implementation
-since there wasn't anything complete enough/no python client for mattermost at all - none that I found at least.
-I will probably do some changes there, maybe move the client into it's own repository.
 
 ### FAQ
 
