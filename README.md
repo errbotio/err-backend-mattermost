@@ -6,10 +6,14 @@ especially:
 https://github.com/errbotio/errbot/blob/master/errbot/backends/slack.py
 (If there is an Issue with any code I reused, please give me a message!)
 
-It probably has quite a few bugs as it is.
 
-## Experimental APIv4 Support
-You can try out the apiv4 branch if you want some unstable experience! :-)
+## APIv4 Support
+The master branch is now set to use the new APIv4 for mattermost.
+Some things have changed, please see the updated requirements and
+changed BOT_IDENTITY parameters.
+
+### APIv3
+Use the APIv3 branch for that.
 
 **Attention**: The `BOT_IDENTITY` config options have changed!
 
