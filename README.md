@@ -1,12 +1,5 @@
 # Errbot Backend for Mattermost
 
-**Thanks** to http://errbot.io for the bot.
-Most of this code was build with help from the already existing backends,
-especially:
-https://github.com/errbotio/errbot/blob/master/errbot/backends/slack.py
-(If there is an Issue with any code I reused, please give me a message!)
-
-
 ## APIv4 Support
 The master branch is now set to use the new APIv4 for mattermost.
 Some things have changed, please see the updated requirements and
@@ -66,3 +59,10 @@ BOT_IDENTITY = {
 ##### The Bot does not answer my direct messages
 If you have multiple teams, check that you are both members of the same team!
 
+# SPECIAL THANKS
+
+**Thanks** to http://errbot.io and all the contributors to the bot.
+Most of this code was build with help from the already existing backends,
+especially:
+https://github.com/errbotio/errbot/blob/master/errbot/backends/slack.py
+(If there is an Issue with any code I reused, please give me a message!)
