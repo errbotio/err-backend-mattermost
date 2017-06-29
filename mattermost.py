@@ -10,7 +10,7 @@ from errbot.core import ErrBot
 from errbot.rendering import md
 from errbot.utils import split_string_after
 from mattermostdriver import Driver
-from mattermostdriver.client import (
+from mattermostdriver.exceptions import (
 	InvalidOrMissingParameters, NoAccessTokenProvided, NotEnoughPermissions, FeatureDisabled,
 	ContentTooLarge, ResourceNotFound
 )
