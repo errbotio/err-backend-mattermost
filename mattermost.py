@@ -492,7 +492,7 @@ class MattermostBackend(ErrBot):
 		super().prefix_groupchat_reply(message, identifier)
 		message.body = '@{0}: {1}'.format(identifier.nick, message.body)
 
-	def build_reply(self, message, text=None, private=False):
+	def build_reply(self, message, text=None, private=False, threaded=False):
 		response = self.build_message(text)
 		response.frm = self.bot_identifier
 		if private:
