@@ -17,7 +17,6 @@ Use the APIv3 branch for that.
 ### KNOWN (POSSIBLE) ISSUES
 
 - Channelmentions in messages aren't accounted for (Unsure if they need to be)
-- ~~Nothing regarding files works~~ Info about files in a post are attached to the message
 
 ### REQUIREMENTS
 - Python >= 3.4 (3.3 should work too)
