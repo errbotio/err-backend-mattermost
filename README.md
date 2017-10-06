@@ -21,7 +21,7 @@ Use the APIv3 branch for that.
 ### REQUIREMENTS
 - Python >= 3.4 (3.3 should work too)
 - websockets 3.2
-- [mattermostdriver](https://github.com/Vaelor/python-mattermost-driver) > 0.3.0
+- [mattermostdriver](https://github.com/Vaelor/python-mattermost-driver) > 2.2.0
 
 ### INSTALLATION
 
@@ -38,10 +38,13 @@ BOT_ADMINS = ('@yourname') # Names need the @ in front!
 
 BOT_IDENTITY = {
         # Required
-        'login': 'bot@email.de',
-        'password': 'botpassword',
         'team': 'nameoftheteam',
         'server': 'mattermost.server.com',
+        # For the login, either
+        'login': 'bot@email.de',
+        'password': 'botpassword',
+        # Or, if you have a personal access token
+        'token': 'YourPersonalAccessToken',
         # Optional
         'insecure': False, # Default = False. Set to true for self signed certificates
         'scheme': 'https', # Default = https

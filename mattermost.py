@@ -132,8 +132,10 @@ class MattermostBackend(ErrBot):
 	def __init__(self, config):
 		super().__init__(config)
 		identity = config.BOT_IDENTITY
-		self._login = identity.get('login')
-		self._password = identity.get('password')
+		self._login = identity.get('login', None)
+		self._password = identity.get('password', None)
+		self._personal_access_token = identity.get('token', None)
+		self._mfa_token = identity.get('mfa_token', None)
 		self.team = identity.get('team')
 		self._scheme = identity.get('scheme', 'https')
 		self._port = identity.get('port', 8065)
@@ -378,7 +380,9 @@ class MattermostBackend(ErrBot):
 			'verify': not self.insecure,
 			'timeout': self.timeout,
 			'login_id': self._login,
-			'password': self._password
+			'password': self._password,
+			'token': self._personal_access_token,
+			'mfa_token': self._mfa_token
 		})
 		self.driver.login()
 

@@ -1,1 +1,1 @@
-mattermostdriver>=2.1
+mattermostdriver>=2.2
