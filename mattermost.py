@@ -6,7 +6,7 @@ from functools import lru_cache
 from errbot.backends.base import (
 	Message, Presence, ONLINE, AWAY, UserDoesNotExistError,
 	RoomDoesNotExistError, RoomOccupant,
-)
+	Card)
 from errbot.core import ErrBot
 from errbot.rendering import md
 from errbot.utils import split_string_after
@@ -29,6 +29,15 @@ MATTERMOST_MESSAGE_LIMIT = 3994
 # to keep the connection alive
 DEFAULT_TIMEOUT = 30
 
+COLORS = {
+	'white': '#FFFFFF',
+	'cyan': '#00FFFF',
+	'blue': '#0000FF',
+	'red': '#FF0000',
+	'green': '#008000',
+	'yellow': '#FFA500',
+}
+
 
 class MattermostBackend(ErrBot):
 	def __init__(self, config):
@@ -41,6 +50,7 @@ class MattermostBackend(ErrBot):
 		self.team = identity.get('team')
 		self._scheme = identity.get('scheme', 'https')
 		self._port = identity.get('port', 8065)
+		self.cards_hook = identity.get('cards_hook', None)
 		self.url = identity.get('server').rstrip('/')
 		self.insecure = identity.get('insecure', False)
 		self.timeout = identity.get('timeout', DEFAULT_TIMEOUT)
@@ -309,25 +319,29 @@ class MattermostBackend(ErrBot):
 			log.debug("Triggering disconnect callback")
 			self.disconnect_callback()
 
+	def _prepare_message(self, message):
+		to_name = "<unknown>"
+		if message.is_group:
+			to_channel_id = message.to.id
+			if message.to.name:
+				to_name = message.to.name
+			else:
+				self.channelid_to_channelname(channelid=to_channel_id)
+		else:
+			to_name = message.to.username
+
+			if isinstance(message.to, RoomOccupant):  # private to a room occupant -> this is a divert to private !
+				log.debug("This is a divert to private message, sending it directly to the user.")
+				channel = self.get_direct_channel(self.userid, self.username_to_userid(to_name))
+				to_channel_id = channel['id']
+			else:
+				to_channel_id = message.to.channelid
+		return to_name, to_channel_id
+
 	def send_message(self, message):
 		super().send_message(message)
-		to_name = "<unknown>"
 		try:
-			if message.is_group:
-				to_channel_id = message.to.id
-				if message.to.name:
-					to_name = message.to.name
-				else:
-					self.channelid_to_channelname(channelid=to_channel_id)
-			else:
-				to_name = message.to.username
-
-				if isinstance(message.to, RoomOccupant):  # private to a room occupant -> this is a divert to private !
-					log.debug("This is a divert to private message, sending it directly to the user.")
-					channel = self.get_direct_channel(self.userid, self.username_to_userid(to_name))
-					to_channel_id = channel['id']
-				else:
-					to_channel_id = message.to.channelid
+			to_name, to_channel_id = self._prepare_message(message)
 
 			message_type = "direct" if message.is_direct else "channel"
 			log.debug('Sending %s message to %s (%s)' % (message_type, to_name, to_channel_id))
@@ -347,6 +361,44 @@ class MattermostBackend(ErrBot):
 			log.exception(
 				"An exception occurred while trying to send the following message "
 				"to %s: %s" % (to_name, message.body)
+			)
+
+	def send_card(self, card: Card):
+		if isinstance(card.to, RoomOccupant):
+			card.to = card.to.room
+		to_humanreadable, to_channel_id = self._prepare_message(card)
+		attachment = {}
+		if card.summary:
+			attachment['pretext'] = card.summary
+		if card.title:
+			attachment['title'] = card.title
+		if card.link:
+			attachment['title_link'] = card.link
+		if card.image:
+			attachment['image_url'] = card.image
+		if card.thumbnail:
+			attachment['thumb_url'] = card.thumbnail
+		attachment['text'] = card.body
+
+		if card.color:
+			attachment['color'] = COLORS[card.color] if card.color in COLORS else card.color
+
+		if card.fields:
+			attachment['fields'] = [{'title': key, 'value': value, 'short': True} for key, value in card.fields]
+
+		data = {
+			'attachments': [attachment]
+		}
+
+		try:
+			log.debug('Sending data:\n%s', data)
+			# We need to send a webhook - mattermost has no api endpoint for attachments/cards
+			# For this reason, we need to build our own url, since we need /hooks and not /api/v4
+			# Todo: Reminder to check if this is still the case
+			self.driver.client.make_request('post', '/' + self.cards_hook, options=data, basepath='/hooks')
+		except Exception:
+			log.exception(
+				"An exception occurred while trying to send a card to %s.[%s]" % (to_humanreadable, card)
 			)
 
 	def prepare_message_body(self, body, size_limit):

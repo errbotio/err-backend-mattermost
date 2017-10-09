@@ -49,12 +49,19 @@ BOT_IDENTITY = {
         'insecure': False, # Default = False. Set to true for self signed certificates
         'scheme': 'https', # Default = https
         'port': 8065, # Default = 8065
-        'timeout': 30 # Default = 30. If the webserver disconnects idle connections later/earlier change this value
+        'timeout': 30, # Default = 30. If the webserver disconnects idle connections later/earlier change this value
+        'cards_hook': 'incomingWebhookId' # Needed for cards/attachments
 }
 ```
 
 - If the bot has problems doing some actions, you should make it system admin, some actions won't work otherwise.
 
+### Cards/Attachments
+Cards are called attachments in Mattermost.
+If you want to send attachments, you need to create an incoming Webhook in Mattermost
+and add the webhook id to your errbot `config.py` in `BOT_IDENTITY`.
+This is not an ideal solution, but AFAIK Mattermost does not support sending attachments
+over the api like slack does.
 
 ### FAQ
 
