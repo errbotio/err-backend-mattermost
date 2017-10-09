@@ -19,7 +19,7 @@ Use the APIv3 branch for that.
 - Channelmentions in messages aren't accounted for (Unsure if they need to be)
 
 ### REQUIREMENTS
-- Python >= 3.4 (3.3 should work too)
+- Python >= 3.4
 - websockets 3.2
 - [mattermostdriver](https://github.com/Vaelor/python-mattermost-driver) > 2.2.0
 
