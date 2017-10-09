@@ -397,7 +397,7 @@ class MattermostBackend(ErrBot):
 			# We need to send a webhook - mattermost has no api endpoint for attachments/cards
 			# For this reason, we need to build our own url, since we need /hooks and not /api/v4
 			# Todo: Reminder to check if this is still the case
-			self.driver.client.make_request('post', '/' + self.cards_hook, options=data, basepath='/hooks')
+			self.driver.api['webhooks'].call_webhook(self.cards_hook, options=data)
 		except (
 					InvalidOrMissingParameters,
 					NotEnoughPermissions,
