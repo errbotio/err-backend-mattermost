@@ -12,8 +12,8 @@ from errbot.rendering import md
 from errbot.utils import split_string_after
 from mattermostdriver import Driver
 from mattermostdriver.exceptions import (
-	InvalidOrMissingParameters, NotEnoughPermissions
-)
+	InvalidOrMissingParameters, NotEnoughPermissions,
+	ContentTooLarge, FeatureDisabled, NoAccessTokenProvided)
 
 from src.mattermostPerson import MattermostPerson
 from src.mattermostRoom import MattermostRoom
@@ -366,7 +366,9 @@ class MattermostBackend(ErrBot):
 	def send_card(self, card: Card):
 		if isinstance(card.to, RoomOccupant):
 			card.to = card.to.room
+
 		to_humanreadable, to_channel_id = self._prepare_message(card)
+
 		attachment = {}
 		if card.summary:
 			attachment['pretext'] = card.summary
@@ -396,7 +398,13 @@ class MattermostBackend(ErrBot):
 			# For this reason, we need to build our own url, since we need /hooks and not /api/v4
 			# Todo: Reminder to check if this is still the case
 			self.driver.client.make_request('post', '/' + self.cards_hook, options=data, basepath='/hooks')
-		except Exception:
+		except (
+					InvalidOrMissingParameters,
+					NotEnoughPermissions,
+					ContentTooLarge,
+					FeatureDisabled,
+					NoAccessTokenProvided
+				):
 			log.exception(
 				"An exception occurred while trying to send a card to %s.[%s]" % (to_humanreadable, card)
 			)
