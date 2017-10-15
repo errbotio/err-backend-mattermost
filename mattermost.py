@@ -392,6 +392,10 @@ class MattermostBackend(ErrBot):
 			'attachments': [attachment]
 		}
 
+		if card.to:
+			if isinstance(card.to, MattermostRoom):
+				data['channel'] = card.to.name
+
 		try:
 			log.debug('Sending data:\n%s', data)
 			# We need to send a webhook - mattermost has no api endpoint for attachments/cards
