@@ -20,7 +20,7 @@ class MattermostPerson(Person):
 
 	@property
 	def username(self) -> str:
-		user = self._driver.api['users'].get_user(user_id=self.userid)
+		user = self._driver.users.get_user(user_id=self.userid)
 		if 'username' not in user:
 			log.error("Can't find username for user with ID {}".format(self._userid))
 			return "<{}>".format(self._userid)
@@ -48,7 +48,7 @@ class MattermostPerson(Person):
 
 	@property
 	def fullname(self):
-		user = self._driver.api['users'].get_user(user_id=self.userid)
+		user = self._driver.users.get_user(user_id=self.userid)
 		if 'first_name' not in user and 'last_name' not in user:
 			log.error("No first or last name for user with ID {}".format(self._userid))
 			return "<{}>".format(self._userid)

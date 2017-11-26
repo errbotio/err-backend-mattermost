@@ -44,7 +44,7 @@ class MattermostRoom(Room):
 
 	@property
 	def _channel(self):
-		channel = self.driver.api['channels'].get_channel_by_name(team_id=self.teamid, channel_name=self.name)
+		channel = self.driver.channels.get_channel_by_name(team_id=self.teamid, channel_name=self.name)
 		if 'status_code' in channel and channel['status_code'] != 200:
 			raise RoomDoesNotExistError("{}: {}".format(channel['status_code'], channel['message']))
 		return channel
@@ -60,7 +60,7 @@ class MattermostRoom(Room):
 	@property
 	def exists(self):
 		channels = []
-		channels.extend(self.driver.api['channels'].get_channels_for_user(user_id='me', team_id=self.teamid))
+		channels.extend(self.driver.channels.get_channels_for_user(user_id='me', team_id=self.teamid))
 		public_channels = self._bot.get_public_channels()
 		for channel in public_channels:
 			if channel not in channels:
@@ -69,7 +69,7 @@ class MattermostRoom(Room):
 
 	@property
 	def joined(self):
-		channels = self.driver.api['channels'].get_channels_for_user(user_id='me', team_id=self.teamid)
+		channels = self.driver.channels.get_channels_for_user(user_id='me', team_id=self.teamid)
 		return len([c for c in channels if c['name'] == self.name]) > 0
 
 	@property
@@ -81,7 +81,7 @@ class MattermostRoom(Room):
 
 	@topic.setter
 	def topic(self, topic):
-		self.driver.api['channels'].update_channel(
+		self.driver.channels.update_channel(
 			channel_id=self.id,
 			options={'header': topic, 'id': self.id}
 		)
@@ -95,19 +95,19 @@ class MattermostRoom(Room):
 
 	@purpose.setter
 	def purpose(self, purpose):
-		self.driver.api['channels'].update_channel(
+		self.driver.channels.update_channel(
 			channel_id=self.id,
 			options={'purpose': purpose, 'id': self.id}
 		)
 
 	@property
 	def occupants(self):
-		member_count = self.driver.api['channels'].get_channel_statistics(channel_id=self.id)['member_count']
+		member_count = self.driver.channels.get_channel_statistics(channel_id=self.id)['member_count']
 		members = {}
 		user_page_limit = 200
 		for start in range(0, member_count, user_page_limit):
 			members.update(
-				self.driver.api['channels'].get_channel_members(
+				self.driver.channels.get_channel_members(
 					channel_id=self.id,
 					params={'page': start, 'per_page': user_page_limit}
 				)
@@ -122,13 +122,13 @@ class MattermostRoom(Room):
 		else:
 			log.info("Creating public channel {}".format(str(self)))
 		try:
-			self.driver.api['channels'].create_channel(options={
+			self.driver.channels.create_channel(options={
 				'team_id': self.teamid,
 				'name': self.name,
 				'display_name': self.name,
 				'type': channel_type
 			})
-			self.driver.api['channels'].get_channel_by_name(team_id=self.teamid, channel_name=self.name)
+			self.driver.channels.get_channel_by_name(team_id=self.teamid, channel_name=self.name)
 			self._bot.callback_room_joined(self)
 		except (NotEnoughPermissions, ResourceNotFound) as e:
 			raise RoomError(e)
@@ -139,7 +139,7 @@ class MattermostRoom(Room):
 			self.create()  # This always creates a public room!
 		log.info("Joining channel {}".format(str(self)))
 		try:
-			self.driver.api['channels'].add_user(
+			self.driver.channels.add_user(
 				channel_id=self._id,
 				options={
 					'user_id': self._bot.userid
@@ -152,14 +152,14 @@ class MattermostRoom(Room):
 	def leave(self, reason: str=None):
 		log.info('Leaving channel {} ({})'.format(str(self), self.id))
 		try:
-			self.driver.api['channels'].remove_user_from_channel(channel_id=self.id, user_id=self._bot.id)
+			self.driver.channels.remove_user_from_channel(channel_id=self.id, user_id=self._bot.id)
 			self._bot.callback_room_left(self)
 		except (InvalidOrMissingParameters, NotEnoughPermissions) as e:
 			raise RoomError(e)
 
 	def destroy(self):
 		try:
-			self.driver.api['channels'].delete_channel(channel_id=self.id)
+			self.driver.channels.delete_channel(channel_id=self.id)
 			self._bot.callback_room_left(self)
 		except (InvalidOrMissingParameters, NotEnoughPermissions) as e:
 			log.debug('Could not delete the channel. Are you a member of the channel?')
@@ -167,11 +167,11 @@ class MattermostRoom(Room):
 		self._id = None
 
 	def invite(self, *args):
-		user_count = self.driver.api['teams'].get_team_stats(team_id=self.teamid)['total_member_count']
+		user_count = self.driver.teams.get_team_stats(team_id=self.teamid)['total_member_count']
 		user_page_limit = 200
 		users_not_in_channel = []
 		for start in range(0, user_count, user_page_limit):
-			users_not_in_channel.extend(self.driver.api['users'].get_users(
+			users_not_in_channel.extend(self.driver.users.get_users(
 				params={
 					'page': start,
 					'per_page': user_page_limit,
@@ -188,7 +188,7 @@ class MattermostRoom(Room):
 			log.info('Inviting {} into {} ({})'.format(user, str(self), self.id))
 
 			try:
-				self.driver.api['channels'].add_user(channel_id=self.id, options={'user_id': users[user]})
+				self.driver.channels.add_user(channel_id=self.id, options={'user_id': users[user]})
 			except (InvalidOrMissingParameters, NotEnoughPermissions):
 				raise RoomError("Unable to invite {} to channel {} ({})".format(
 					user, str(self), self.id

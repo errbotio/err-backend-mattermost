@@ -71,7 +71,7 @@ class MattermostBackend(ErrBot):
 	def username_to_userid(self, name):
 		"""Converts a name prefixed with @ to the userid"""
 		name = name.lstrip('@')
-		user = self.driver.api['users'].get_user_by_username(username=name)
+		user = self.driver.users.get_user_by_username(username=name)
 		if user is None:
 			raise UserDoesNotExistError("Cannot find user {}".format(name))
 		return user['id']
@@ -233,7 +233,7 @@ class MattermostBackend(ErrBot):
 		If it does not exist, it will be created.
 		"""
 		try:
-			return self.driver.api['channels'].create_direct_message_channel(options=[userid, other_user_id])
+			return self.driver.channels.create_direct_message_channel(options=[userid, other_user_id])
 		except (InvalidOrMissingParameters, NotEnoughPermissions):
 			raise RoomDoesNotExistError("Could not find Direct Channel for users with ID {} and {}".format(
 				userid, other_user_id
@@ -298,8 +298,8 @@ class MattermostBackend(ErrBot):
 		})
 		self.driver.login()
 
-		self.teamid = self.driver.api['teams'].get_team_by_name(name=self.team)['id']
-		userid = self.driver.api['users'].get_user(user_id='me')['id']
+		self.teamid = self.driver.teams.get_team_by_name(name=self.team)['id']
+		userid = self.driver.users.get_user(user_id='me')['id']
 
 		self.token = self.driver.client.token
 
@@ -353,7 +353,7 @@ class MattermostBackend(ErrBot):
 			parts = self.prepare_message_body(body, limit)
 
 			for part in parts:
-				self.driver.api['posts'].create_post(options={
+				self.driver.posts.create_post(options={
 					'channel_id': to_channel_id,
 					'message': part,
 				})
@@ -401,7 +401,7 @@ class MattermostBackend(ErrBot):
 			# We need to send a webhook - mattermost has no api endpoint for attachments/cards
 			# For this reason, we need to build our own url, since we need /hooks and not /api/v4
 			# Todo: Reminder to check if this is still the case
-			self.driver.api['webhooks'].call_webhook(self.cards_hook, options=data)
+			self.driver.webhooks.call_webhook(self.cards_hook, options=data)
 		except (
 					InvalidOrMissingParameters,
 					NotEnoughPermissions,
@@ -476,7 +476,7 @@ class MattermostBackend(ErrBot):
 		page = 0
 		channel_page_limit = 200
 		while True:
-			channel_list = self.driver.api['channels'].get_public_channels(
+			channel_list = self.driver.channels.get_public_channels(
 				team_id=self.teamid,
 				params={'page': page, 'per_page': channel_page_limit}
 			)
@@ -489,7 +489,7 @@ class MattermostBackend(ErrBot):
 
 	def channels(self, joined_only=False):
 		channels = []
-		channels.extend(self.driver.api['channels'].get_channels_for_user(user_id=self.userid, team_id=self.teamid))
+		channels.extend(self.driver.channels.get_channels_for_user(user_id=self.userid, team_id=self.teamid))
 		if not joined_only:
 			public_channels = self.get_public_channels()
 			for channel in public_channels:
@@ -505,7 +505,7 @@ class MattermostBackend(ErrBot):
 
 	def channelid_to_channelname(self, channelid):
 		"""Convert the channelid in the current team to the channel name"""
-		channel = self.driver.api['channels'].get_channel(channel_id=channelid)
+		channel = self.driver.channels.get_channel(channel_id=channelid)
 		if 'name' not in channel:
 			raise RoomDoesNotExistError("No channel with ID {} exists in team with ID {}".format(
 				id, self.teamid
@@ -514,7 +514,7 @@ class MattermostBackend(ErrBot):
 
 	def channelname_to_channelid(self, name):
 		"""Convert the channelname in the current team to the channel id"""
-		channel = self.driver.api['channels'].get_channel_by_name(team_id=self.teamid, channel_name=name)
+		channel = self.driver.channels.get_channel_by_name(team_id=self.teamid, channel_name=name)
 		if 'id' not in channel:
 			raise RoomDoesNotExistError("No channel with name {} exists in team with ID {}".format(
 				name, self.teamid

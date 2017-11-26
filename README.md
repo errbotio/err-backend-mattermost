@@ -1,27 +1,10 @@
 # Errbot Backend for Mattermost
 
-## APIv4 Support
-The master branch is now set to use the new APIv4 for mattermost.
-Some things have changed, please see the updated requirements and
-changed BOT_IDENTITY parameters.
-
- - 'email' is now 'login'
- - 'server' is the url without https:// or the port. Port and scheme have their own option now.
- - You need to `pip install mattermostdriver`
-
-### APIv3
-Use the APIv3 branch for that.
-
-**Attention**: The `BOT_IDENTITY` config options have changed!
-
-### KNOWN (POSSIBLE) ISSUES
-
-- Channelmentions in messages aren't accounted for (Unsure if they need to be)
-
 ### REQUIREMENTS
+- Mattermost with APIv4
 - Python >= 3.4
 - websockets 3.2
-- [mattermostdriver](https://github.com/Vaelor/python-mattermost-driver) > 2.2.0
+- [mattermostdriver](https://github.com/Vaelor/python-mattermost-driver) > 4.0
 
 ### INSTALLATION
 
@@ -62,6 +45,15 @@ If you want to send attachments, you need to create an incoming Webhook in Matte
 and add the webhook id to your errbot `config.py` in `BOT_IDENTITY`.
 This is not an ideal solution, but AFAIK Mattermost does not support sending attachments
 over the api like slack does.
+
+### APIv3
+Use the APIv3 branch for that. It is no longer supported and not guaranteed to work!
+
+**Attention**: The `BOT_IDENTITY` config options are different for V3 and V4!
+
+### KNOWN (POSSIBLE) ISSUES
+
+- Channelmentions in messages aren't accounted for (Unsure if they need to be)
 
 ### FAQ
 
