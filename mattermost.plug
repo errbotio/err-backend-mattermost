@@ -5,5 +5,5 @@ Module = mattermost
 [Documentation]
 Description = A Mattermost backend for errbot.
 Author = Christian Plümer
-Version = 2.0.0
+Version = 2.0.1
 Website = https://github.com/Vaelor/errbot-mattermost-backend

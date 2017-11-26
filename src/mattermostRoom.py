@@ -181,7 +181,7 @@ class MattermostRoom(Room):
 			))
 		users = {}
 		for user in users_not_in_channel:
-			users.update({users_not_in_channel[user]['username']: users_not_in_channel[user]['id']})
+			users.update({user['username']: user['id']})
 		for user in args:
 			if user not in users:
 				raise UserDoesNotExistError('User \'{}\' not found'.format(user))
