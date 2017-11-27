@@ -23,6 +23,12 @@ class MattermostRoom(Room):
 
 		self._teamid = teamid
 		self._id = None if channelid is None else channelid
+		if self._id is None and name is not None:
+			try:
+				self._id = bot.channelname_to_channelid(name)
+			except RoomDoesNotExistError as e:
+				# If the room does not exist, maybe it will be created.
+				log.info(e)
 		self._bot = bot
 		self.driver = bot.driver
 
