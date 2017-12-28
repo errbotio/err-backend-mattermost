@@ -170,9 +170,16 @@ class MattermostBackend(ErrBot):
 			# TODO: Only user, not channel mentions are in here at the moment
 			mentions = self.mentions_build_identifier(json.loads(data['mentions']))
 
+		# Thread root post id
+		root_id = post.get('root_id')
+		if root_id is '':
+			root_id = post_id
+
 		msg = Message(
 			text,
 			extras={
+				'id': post_id,
+				'root_id': root_id,
 				'mattermost_event': message,
 				'url': '{scheme:s}://{domain:s}:{port:s}/{teamname:s}/pl/{postid:s}'.format(
 					scheme=self.driver.options['scheme'],
@@ -352,10 +359,15 @@ class MattermostBackend(ErrBot):
 			limit = min(self.bot_config.MESSAGE_SIZE_LIMIT, MATTERMOST_MESSAGE_LIMIT)
 			parts = self.prepare_message_body(body, limit)
 
+			root_id = None
+			if message.parent is not None:
+				root_id = message.parent.extras.get('root_id')
+
 			for part in parts:
 				self.driver.posts.create_post(options={
 					'channel_id': to_channel_id,
 					'message': part,
+					'root_id': root_id,
 				})
 		except (InvalidOrMissingParameters, NotEnoughPermissions):
 			log.exception(
