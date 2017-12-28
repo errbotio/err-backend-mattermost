@@ -1,0 +1,9 @@
+[Core]
+Name = TestPlugin
+Module = test
+
+[Documentation]
+Description = A Test plugin
+
+[Python]
+Version = 3

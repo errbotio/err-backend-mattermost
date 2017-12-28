@@ -1,0 +1,23 @@
+version: "2"
+
+services:
+
+  db:
+    image: mattermost/mattermost-prod-db
+    environment:
+      - POSTGRES_USER=mmuser
+      - POSTGRES_PASSWORD=mmuser_password
+      - POSTGRES_DB=mattermost
+
+  app:
+    image: mattermost/mattermost-prod-app
+    environment:
+      - MM_USERNAME=mmuser
+      - MM_PASSWORD=mmuser_password
+      - MM_DBNAME=mattermost
+
+  web:
+    image: mattermost/mattermost-prod-web
+    ports:
+      - "8080:80"
+      - "8443:443"
