@@ -109,16 +109,23 @@ class MattermostRoom(Room):
 	@property
 	def occupants(self):
 		member_count = self.driver.channels.get_channel_statistics(channel_id=self.id)['member_count']
-		members = {}
+		members = []
 		user_page_limit = 200
 		for start in range(0, member_count, user_page_limit):
-			members.update(
-				self.driver.channels.get_channel_members(
+			member_part = self.driver.channels.get_channel_members(
 					channel_id=self.id,
 					params={'page': start, 'per_page': user_page_limit}
 				)
-			)
-		return [MattermostRoomOccupant(self.driver, userid=m, teamid=self.teamid, channelid=self.id, bot=self._bot) for m in members]
+			members.extend(member_part)
+
+		room_occupants = [MattermostRoomOccupant(
+				self.driver,
+				userid=m['user_id'],
+				teamid=self.teamid,
+				channelid=self.id,
+				bot=self._bot
+			) for m in members]
+		return room_occupants
 
 	def create(self, private=False):
 		channel_type = 'O'
