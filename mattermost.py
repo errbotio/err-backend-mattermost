@@ -25,6 +25,9 @@ log = logging.getLogger('errbot.backends.mattermost')
 # backticks when messages are split
 MATTERMOST_MESSAGE_LIMIT = 3994
 
+# Ignore messages from any other team?
+MATTERMOST_SINGLE_TEAM = False
+
 # Default websocket timeout - this is needed to send a heartbeat
 # to keep the connection alive
 DEFAULT_TIMEOUT = 30
@@ -121,7 +124,7 @@ class MattermostBackend(ErrBot):
 		data = message['data']
 
 		# In some cases (direct messages) team_id is an empty string
-		if data['team_id'] != '' and self.teamid != data['team_id']:
+		if MATTERMOST_SINGLE_TEAM and data['team_id'] != '' and self.teamid != data['team_id']:
 			log.info("Message came from another team ({}), ignoring...".format(data['team_id']))
 			return
 
