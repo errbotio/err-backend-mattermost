@@ -59,6 +59,13 @@ class MattermostBackend(ErrBot):
 		self.bot_identifier = None
 		self.driver = None
 		self.md = md()
+		self.event_handlers = {
+			'posted': [self._message_event_handler],
+			'status_change': [self._status_change_event_handler],
+			'hello': [self._hello_event_handler],
+			'user_added': [self._room_joined_event_handler],
+			'user_removed': [self._room_left_event_handler],
+		}
 
 	@property
 	def userid(self):
@@ -76,6 +83,11 @@ class MattermostBackend(ErrBot):
 			raise UserDoesNotExistError("Cannot find user {}".format(name))
 		return user['id']
 
+	def register_handler(self, event, handler):
+		if event not in self.event_handlers:
+			self.event_handlers[event] = []
+		self.event_handlers[event].append(handler)
+
 	@asyncio.coroutine
 	def mattermost_event_handler(self, payload):
 		if not payload:
@@ -86,25 +98,18 @@ class MattermostBackend(ErrBot):
 			log.debug("Message contains no event: {}".format(payload))
 			return
 
-		event_handlers = {
-			'posted': self._message_event_handler,
-			'status_change': self._status_change_event_handler,
-			'hello': self._hello_event_handler,
-			'user_added': self._room_joined_event_handler,
-			'user_removed': self._room_left_event_handler,
-		}
-
 		event = payload['event']
-		event_handler = event_handlers.get(event)
+		event_handlers = self.event_handlers.get(event)
 
-		if event_handler is None:
-			log.debug("No event handler available for {}, ignoring.".format(event))
+		if event_handlers is None:
+			log.debug("No event handlers available for {}, ignoring.".format(event))
 			return
 		# noinspection PyBroadException
-		try:
-			event_handler(payload)
-		except Exception:
-			log.exception("{} event handler raised an exception".format(event))
+		for event_handler in event_handlers:
+			try:
+				event_handler(payload)
+			except Exception:
+				log.exception("{} event handler raised an exception".format(event))
 
 	def _room_joined_event_handler(self, message):
 		log.debug('User added to channel')
