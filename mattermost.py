@@ -21,9 +21,9 @@ from src.mattermostRoomOccupant import MattermostRoomOccupant
 
 log = logging.getLogger('errbot.backends.mattermost')
 
-# Mattermost message limit is 4000 chars, need to leave some space for
+# Mattermost message limit is 16383 chars, need to leave some space for
 # backticks when messages are split
-MATTERMOST_MESSAGE_LIMIT = 3994
+MATTERMOST_MESSAGE_LIMIT = 16377
 
 # Default websocket timeout - this is needed to send a heartbeat
 # to keep the connection alive
