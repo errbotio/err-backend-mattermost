@@ -31,9 +31,7 @@ class TestPlugin(BotPlugin):
 
         You should delete it if your plugin doesn't use any configuration like this
         """
-        return {'EXAMPLE_KEY_1': "Example value",
-                'EXAMPLE_KEY_2': ["Example", "Value"]
-                }
+        return {"EXAMPLE_KEY_1": "Example value", "EXAMPLE_KEY_2": ["Example", "Value"]}
 
     def check_configuration(self, configuration):
         """
@@ -62,8 +60,11 @@ class TestPlugin(BotPlugin):
             pass
 
         # Threaded message
-        self.send(in_reply_to=message, identifier=message.to,
-                  text="Call back threaded message")
+        self.send(
+            in_reply_to=message,
+            identifier=message.to,
+            text="Call back threaded message",
+        )
 
         # Single message
         self.send(identifier=message.to, text="Call back single message")

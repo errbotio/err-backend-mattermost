@@ -25,55 +25,55 @@ local_dir_path = os.path.dirname(__file__)
 # Core Errbot configuration                                              #
 ##########################################################################
 
-BACKEND = 'Mattermost'
-BOT_EXTRA_BACKEND_DIR = os.path.join(local_dir_path, '..')
+BACKEND = "Mattermost"
+BOT_EXTRA_BACKEND_DIR = os.path.join(local_dir_path, "..")
 
-BOT_ADMINS = ('@gpr')  # Names need the @ in front!
+BOT_ADMINS = "@gpr"  # Names need the @ in front!
 BOT_IDENTITY = {
     # Required
-    'team': 'default',
-    'server': '0.0.0.0',
+    "team": "default",
+    "server": "0.0.0.0",
     # For the login, either
-    'login': 'errbot',
-    'password': 'errbot',
+    "login": "errbot",
+    "password": "errbot",
     # Optional
-    'insecure': True,  # Default = False. Set to true for self signed certificates
-    'scheme': 'http',  # Default = https
-    'port': 8080,  # Default = 8065
-    'timeout': 30,  # Default = 30. If the webserver disconnects idle connections later/earlier change this value
-    'cards_hook': 'osjx5d4ijfft58pf4tyci79jhh'  # Needed for cards/attachments
+    "insecure": True,  # Default = False. Set to true for self signed certificates
+    "scheme": "http",  # Default = https
+    "port": 8080,  # Default = 8065
+    "timeout": 30,  # Default = 30. If the webserver disconnects idle connections later/earlier change this value
+    "cards_hook": "osjx5d4ijfft58pf4tyci79jhh",  # Needed for cards/attachments
 }
 
-STORAGE = 'Memory'
-BOT_DATA_DIR = os.path.join(local_dir_path, 'data')
-BOT_EXTRA_PLUGIN_DIR = os.path.join(local_dir_path, 'plugins')
-PLUGINS_CALLBACK_ORDER = (None, )
+STORAGE = "Memory"
+BOT_DATA_DIR = os.path.join(local_dir_path, "data")
+BOT_EXTRA_PLUGIN_DIR = os.path.join(local_dir_path, "plugins")
+PLUGINS_CALLBACK_ORDER = (None,)
 AUTOINSTALL_DEPS = True
-BOT_LOG_FILE = BOT_DATA_DIR + '/err.log'
+BOT_LOG_FILE = BOT_DATA_DIR + "/err.log"
 BOT_LOG_LEVEL = logging.DEBUG
 BOT_LOG_SENTRY = False
-SENTRY_DSN = ''
+SENTRY_DSN = ""
 SENTRY_LOGLEVEL = BOT_LOG_LEVEL
 BOT_ASYNC = False
-BOT_ADMINS_NOTIFICATIONS = ('@gpr')
-BOT_PREFIX = '!'
+BOT_ADMINS_NOTIFICATIONS = "@gpr"
+BOT_PREFIX = "!"
 
-#BOT_PREFIX_OPTIONAL_ON_CHAT = False
-#BOT_ALT_PREFIXES = ('Err',)
-#BOT_ALT_PREFIX_SEPARATORS = (':', ',', ';')
-#BOT_ALT_PREFIX_CASEINSENSITIVE = True
-#HIDE_RESTRICTED_COMMANDS = False
-#HIDE_RESTRICTED_ACCESS = False
+# BOT_PREFIX_OPTIONAL_ON_CHAT = False
+# BOT_ALT_PREFIXES = ('Err',)
+# BOT_ALT_PREFIX_SEPARATORS = (':', ',', ';')
+# BOT_ALT_PREFIX_CASEINSENSITIVE = True
+# HIDE_RESTRICTED_COMMANDS = False
+# HIDE_RESTRICTED_ACCESS = False
 
 # A list of commands which should be responded to in private, even if
 # the command was given in a MUC. For example:
 # DIVERT_TO_PRIVATE = ('help', 'about', 'status')
-DIVERT_TO_PRIVATE = ('status', 'help', 'about')
+DIVERT_TO_PRIVATE = ("status", "help", "about")
 
 # A list of commands which should be responded to in a thread if the backend supports it.
 # For example:
 # DIVERT_TO_THREAD = ('help', 'about', 'status')
-DIVERT_TO_THREAD = ('divert_to_thread')
+DIVERT_TO_THREAD = "divert_to_thread"
 
 # Chat relay
 # Can be used to relay one to one message from specific users to the bot
@@ -89,7 +89,7 @@ CHATROOM_RELAY = {}
 REVERSE_CHATROOM_RELAY = {}
 
 # Allow messages sent in a chatroom to be directed at requester.
-#GROUPCHAT_NICK_PREFIXED = False
+# GROUPCHAT_NICK_PREFIXED = False
 
 # Disable table borders, making output more compact (supported only on IRC, Slack and Telegram currently).
 COMPACT_OUTPUT = True
