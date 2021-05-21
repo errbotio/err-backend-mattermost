@@ -193,8 +193,8 @@ class MattermostBackend(ErrBot):
             mentions = self.mentions_build_identifier(json.loads(data["mentions"]))
 
         # Thread root post id
-        root_id = post.get("root_id")
-        if root_id is "":
+        root_id = post.get("root_id", "")
+        if root_id == "":
             root_id = post_id
 
         msg = Message(
