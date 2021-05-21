@@ -28,6 +28,11 @@ class MattermostPerson(Person):
         return user["username"]
 
     @property
+    def email(self) -> str:
+        user = self._driver.users.get_user(user_id=self.userid)
+        return user.get("email", "")
+
+    @property
     def teamid(self) -> str:
         return self._teamid
 
