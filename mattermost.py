@@ -31,10 +31,6 @@ from src.mattermostRoomOccupant import MattermostRoomOccupant
 
 log = logging.getLogger("errbot.backends.mattermost")
 
-# Mattermost message limit is 16383 chars, need to leave some space for
-# backticks when messages are split
-MATTERMOST_MESSAGE_LIMIT = 16377
-
 # Default websocket timeout - this is needed to send a heartbeat
 # to keep the connection alive
 DEFAULT_TIMEOUT = 30
@@ -76,6 +72,13 @@ class MattermostBackend(ErrBot):
             "user_added": [self._room_joined_event_handler],
             "user_removed": [self._room_left_event_handler],
         }
+
+    def set_message_size_limit(self, limit=16377, hard_limit=16383):
+        """
+        Mattermost message limit is 16383 chars, need to leave some space for
+        backticks when messages are split
+        """
+        super().set_message_size_limit(limit, hard_limit)
 
     @property
     def userid(self):
@@ -190,8 +193,8 @@ class MattermostBackend(ErrBot):
             mentions = self.mentions_build_identifier(json.loads(data["mentions"]))
 
         # Thread root post id
-        root_id = post.get("root_id")
-        if root_id is "":
+        root_id = post.get("root_id", "")
+        if root_id == "":
             root_id = post_id
 
         msg = Message(
@@ -403,8 +406,7 @@ class MattermostBackend(ErrBot):
             body = self.md.convert(message.body)
             log.debug("Message size: %d" % len(body))
 
-            limit = min(self.bot_config.MESSAGE_SIZE_LIMIT, MATTERMOST_MESSAGE_LIMIT)
-            parts = self.prepare_message_body(body, limit)
+            parts = self.prepare_message_body(body, self.message_size_limit)
 
             root_id = None
             if message.parent is not None:
