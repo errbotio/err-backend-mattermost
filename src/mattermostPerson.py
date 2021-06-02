@@ -28,6 +28,11 @@ class MattermostPerson(Person):
         return user["username"]
 
     @property
+    def email(self) -> str:
+        user = self._driver.users.get_user(user_id=self.userid)
+        return user.get("email", "")
+
+    @property
     def teamid(self) -> str:
         return self._teamid
 
@@ -50,14 +55,17 @@ class MattermostPerson(Person):
     @property
     def fullname(self):
         user = self._driver.users.get_user(user_id=self.userid)
-        if "first_name" not in user and "last_name" not in user:
-            log.error("No first or last name for user with ID {}".format(self._userid))
-            return "<{}>".format(self._userid)
-        return "{} {}".format(user["first_name"], user["last_name"])
 
-    @property
-    def person(self):
-        return "@{}".format(self.username)
+        fullname = user.get("first_name", "")
+        if fullname == "":
+            log.warning("No first name for user with ID {}".format(self._userid))
+
+        fullname += " {}".format(user.get("last_name", ""))
+        if fullname == "{} ".format(user.get("first_name", "")):
+            log.warning("No surname for user with ID {}".format(self._userid))
+            fullname.strip()
+
+        return f"{fullname}"
 
     @property
     def person(self):
