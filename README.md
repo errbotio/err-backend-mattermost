@@ -8,7 +8,7 @@
 
 ### INSTALLATION
 
-- `git clone https://github.com/Vaelor/errbot-mattermost-backend.git`
+- `git clone https://github.com/errbotio/errbot-mattermost-backend.git`
 - Create an account for the bot on the server.
 - Install the requirements.
 - Open errbot's config.py:
