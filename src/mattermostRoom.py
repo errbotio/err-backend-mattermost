@@ -55,7 +55,9 @@ class MattermostRoom(Room):
             self._id = self._channel["id"]
         return self._id
 
-    channelid = id
+    @property
+    def userid(self):
+        return self._bot.userid
 
     @property
     def _channel(self):
@@ -177,10 +179,10 @@ class MattermostRoom(Room):
                 "Channel {} doesn't seem exist, trying to create it.".format(str(self))
             )
             self.create()  # This always creates a public room!
-        log.info("Joining channel {}".format(str(self)))
+        log.info("Joining channel {} ({})".format(str(self), self.id))
         try:
             self.driver.channels.add_user(
-                channel_id=self._id, options={"user_id": self._bot.userid}
+                channel_id=self._id, options={"user_id": self.userid}
             )
             self._bot.callback_room_joined(self)
         except (InvalidOrMissingParameters, NotEnoughPermissions) as e:
@@ -189,8 +191,8 @@ class MattermostRoom(Room):
     def leave(self, reason: str = None):
         log.info("Leaving channel {} ({})".format(str(self), self.id))
         try:
-            self.driver.channels.remove_user_from_channel(
-                channel_id=self.id, user_id=self._bot.id
+            self.driver.channels.remove_channel_member(
+                channel_id=self.id, user_id=self.userid
             )
             self._bot.callback_room_left(self)
         except (InvalidOrMissingParameters, NotEnoughPermissions) as e:
