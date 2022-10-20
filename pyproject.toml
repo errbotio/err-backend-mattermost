@@ -1,0 +1,37 @@
+[build-system]
+requires = [
+    "setuptools>=61.0"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "err-backend-mattermost"
+version = "3.0.0"
+authors = [{ name="Errbot maintainers", email="noreply@errbot.io" }]
+keywords = [
+    "errbot",
+    "mattermost",
+]
+description = "Mattermost backend for Errbot"
+readme = "README.md"
+requires-python = ">=3.7"
+
+license = {text = "GPL-3.0"}
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "mattermostdriver>=4.0",
+]
+
+[project.urls]
+"Documentaion" = "https://err-backend-mattermost.readthedocs.io/"
+"Bug Tracker" = "https://github.com/errbotio/err-backend-mattermost/issues"
+
+[tool.setuptools]
+# available as beta since setuptools version 61.0.0
+include-package-data = true

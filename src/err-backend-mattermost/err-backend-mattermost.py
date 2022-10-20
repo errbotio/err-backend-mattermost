@@ -25,9 +25,9 @@ from mattermostdriver.exceptions import (
     NoAccessTokenProvided,
 )
 
-from src.mattermostPerson import MattermostPerson
-from src.mattermostRoom import MattermostRoom
-from src.mattermostRoomOccupant import MattermostRoomOccupant
+from mattermostlib.mattermostPerson import MattermostPerson
+from mattermostlib.mattermostRoom import MattermostRoom
+from mattermostlib.mattermostRoomOccupant import MattermostRoomOccupant
 
 log = logging.getLogger("errbot.backends.mattermost")
 
@@ -288,7 +288,8 @@ class MattermostBackend(ErrBot):
 
     def build_identifier(self, txtrep):
         """
-        Convert a textual representation into a :class:`~MattermostPerson` or :class:`~MattermostRoom`
+        Convert a textual representation into a
+           :class:`~MattermostPerson` or :class:`~MattermostRoom`
 
         Supports strings with the following formats::
 
