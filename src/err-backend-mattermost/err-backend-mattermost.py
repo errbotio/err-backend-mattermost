@@ -1,4 +1,3 @@
-import asyncio
 import json
 import logging
 from functools import lru_cache
@@ -101,8 +100,7 @@ class MattermostBackend(ErrBot):
             self.event_handlers[event] = []
         self.event_handlers[event].append(handler)
 
-    @asyncio.coroutine
-    def mattermost_event_handler(self, payload):
+    async def mattermost_event_handler(self, payload):
         if not payload:
             return
 
